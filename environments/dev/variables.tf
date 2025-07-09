@@ -80,6 +80,25 @@ variable "user_data" {
     EOF
 }
 
+# EC2 Additional Configuration
+variable "enable_detailed_monitoring" {
+  description = "Enable detailed monitoring for EC2 instances"
+  type        = bool
+  default     = false
+}
+
+variable "root_volume_size" {
+  description = "Root volume size for EC2 instances"
+  type        = number
+  default     = 8
+}
+
+variable "associate_public_ip" {
+  description = "Associate a public IP address with the EC2 instance"
+  type        = bool
+  default     = false
+}
+
 # Load Balancer Configuration
 variable "target_port" {
   description = "Port for the target group"

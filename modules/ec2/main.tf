@@ -1,117 +1,66 @@
-# EC2 Module
+# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
+# EC2 Module - Simplified for basic instance creation
 
-# Launch Template
-resource "aws_launch_template" "main" {
-  name_prefix   = "${var.project_name}-"
-  image_id      = var.ami_id
-  instance_type = var.instance_type
-  key_name      = var.key_name
+# Basic EC2 Instance
+resource "aws_instance" "main" {
+  ami                     = var.ami_id
+  instance_type           = var.instance_type
+  key_name                = var.key_name
+  subnet_id               = var.subnet_id
+  vpc_security_group_ids  = [var.security_group_id]
+  
+  # AWS Architect Decision: Use user_data for initialization
+  # This allows for consistent server configuration across deployments
+  user_data = var.user_data
 
-  vpc_security_group_ids = [var.security_group_id]
+  # AWS Architect Decision: Enable detailed monitoring for better observability
+  # Cost impact: ~$2.10/month per instance, but provides 1-minute metrics
+  monitoring = var.enable_detailed_monitoring
 
-  user_data = base64encode(var.user_data)
+  # AWS Architect Decision: Disable API termination protection for dev/testing
+  # Enable this in production environments
+  disable_api_termination = var.disable_api_termination
 
-  tag_specifications {
-    resource_type = "instance"
+  # AWS Architect Decision: Use GP3 for better price/performance ratio
+  # GP3 provides 3,000 IOPS baseline vs GP2's burst model
+  root_block_device {
+    volume_type           = "gp3"
+    volume_size           = var.root_volume_size
+    encrypted             = true  # AWS Architect: Always encrypt EBS volumes
+    delete_on_termination = true
+    
     tags = merge(var.common_tags, {
-      Name = "${var.project_name}-instance"
+      Name = "${var.project_name}-root-volume"
     })
   }
 
+  # AWS Architect Decision: Comprehensive tagging strategy
+  # Enables proper cost allocation, automation, and governance
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-instance"
+    # AWS Architect: Add operational tags for better management
+    Backup = var.backup_enabled ? "true" : "false"
+    Monitoring = var.enable_detailed_monitoring ? "enhanced" : "basic"
+  })
+
+  # AWS Architect Decision: Use create_before_destroy for blue-green deployments
   lifecycle {
     create_before_destroy = true
   }
 }
 
-# Auto Scaling Group
-resource "aws_autoscaling_group" "main" {
-  name                = "${var.project_name}-asg"
-  vpc_zone_identifier = var.subnet_ids
-  target_group_arns   = var.target_group_arns
-  health_check_type   = "ELB"
-  health_check_grace_period = 300
-
-  min_size         = var.min_size
-  max_size         = var.max_size
-  desired_capacity = var.desired_capacity
-
-  launch_template {
-    id      = aws_launch_template.main.id
-    version = "$Latest"
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "${var.project_name}-asg"
-    propagate_at_launch = false
-  }
-
-  dynamic "tag" {
-    for_each = var.common_tags
-    content {
-      key                 = tag.key
-      value               = tag.value
-      propagate_at_launch = true
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# Auto Scaling Policies
-resource "aws_autoscaling_policy" "scale_up" {
-  name                   = "${var.project_name}-scale-up"
-  scaling_adjustment     = 1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
-  autoscaling_group_name = aws_autoscaling_group.main.name
-}
-
-resource "aws_autoscaling_policy" "scale_down" {
-  name                   = "${var.project_name}-scale-down"
-  scaling_adjustment     = -1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
-  autoscaling_group_name = aws_autoscaling_group.main.name
-}
-
-# CloudWatch Alarms
-resource "aws_cloudwatch_metric_alarm" "cpu_high" {
-  alarm_name          = "${var.project_name}-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = "300"
-  statistic           = "Average"
-  threshold           = "80"
-  alarm_description   = "This metric monitors ec2 cpu utilization"
-  alarm_actions       = [aws_autoscaling_policy.scale_up.arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.main.name
-  }
-
-  tags = var.common_tags
-}
-
-resource "aws_cloudwatch_metric_alarm" "cpu_low" {
-  alarm_name          = "${var.project_name}-cpu-low"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = "300"
-  statistic           = "Average"
-  threshold           = "10"
-  alarm_description   = "This metric monitors ec2 cpu utilization"
-  alarm_actions       = [aws_autoscaling_policy.scale_down.arn]
-
-  dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.main.name
-  }
-
-  tags = var.common_tags
+# AWS Architect Decision: Optional Elastic IP for static IP requirement
+# Only create if specifically requested to avoid unnecessary costs
+resource "aws_eip" "main" {
+  count = var.associate_public_ip ? 1 : 0
+  
+  instance = aws_instance.main.id
+  domain   = "vpc"
+  
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-eip"
+  })
+  
+  # AWS Architect: Ensure proper cleanup order
+  depends_on = [aws_instance.main]
 }

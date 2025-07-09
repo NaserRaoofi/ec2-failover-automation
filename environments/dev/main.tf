@@ -50,25 +50,25 @@ module "networking" {
   common_tags           = local.common_tags
 }
 
-# Load Balancer Module
-module "load_balancer" {
-  source = "../../modules/load_balancer"
+# Load Balancer Module - Commented out for simplified EC2 deployment
+# module "load_balancer" {
+#   source = "../../modules/load_balancer"
+# 
+#   project_name               = var.project_name
+#   environment               = var.environment
+#   vpc_id                    = module.networking.vpc_id
+#   subnet_ids                = module.networking.public_subnet_ids
+#   security_group_id         = module.networking.alb_security_group_id
+#   target_port               = var.target_port
+#   target_protocol           = var.target_protocol
+#   listener_port             = var.listener_port
+#   listener_protocol         = var.listener_protocol
+#   health_check_path         = var.health_check_path
+#   enable_deletion_protection = var.enable_deletion_protection
+#   common_tags               = local.common_tags
+# }
 
-  project_name               = var.project_name
-  environment               = var.environment
-  vpc_id                    = module.networking.vpc_id
-  subnet_ids                = module.networking.public_subnet_ids
-  security_group_id         = module.networking.alb_security_group_id
-  target_port               = var.target_port
-  target_protocol           = var.target_protocol
-  listener_port             = var.listener_port
-  listener_protocol         = var.listener_protocol
-  health_check_path         = var.health_check_path
-  enable_deletion_protection = var.enable_deletion_protection
-  common_tags               = local.common_tags
-}
-
-# EC2 Module
+# EC2 Module - Updated for simplified configuration
 module "ec2" {
   source = "../../modules/ec2"
 
@@ -78,25 +78,26 @@ module "ec2" {
   instance_type      = var.instance_type
   key_name           = var.key_name
   security_group_id  = module.networking.web_security_group_id
-  subnet_ids         = module.networking.private_subnet_ids
-  target_group_arns  = [module.load_balancer.target_group_arn]
-  min_size           = var.min_size
-  max_size           = var.max_size
-  desired_capacity   = var.desired_capacity
+  subnet_id          = module.networking.private_subnet_ids[0]  # Use first private subnet
   user_data          = var.user_data
   common_tags        = local.common_tags
+  
+  # Optional configurations
+  enable_detailed_monitoring = var.enable_detailed_monitoring
+  root_volume_size          = var.root_volume_size
+  associate_public_ip       = var.associate_public_ip
 }
 
-# Monitoring Module
-module "monitoring" {
-  source = "../../modules/monitoring"
-
-  project_name            = var.project_name
-  environment            = var.environment
-  aws_region             = var.aws_region
-  load_balancer_name     = module.load_balancer.load_balancer_arn
-  target_group_name      = module.load_balancer.target_group_arn
-  autoscaling_group_name = module.ec2.autoscaling_group_name
-  alert_email_addresses  = var.alert_email_addresses
-  common_tags            = local.common_tags
-}
+# Monitoring Module - Commented out for simplified EC2 deployment
+# module "monitoring" {
+#   source = "../../modules/monitoring"
+# 
+#   project_name            = var.project_name
+#   environment            = var.environment
+#   aws_region             = var.aws_region
+#   load_balancer_name     = module.load_balancer.load_balancer_arn
+#   target_group_name      = module.load_balancer.target_group_arn
+#   autoscaling_group_name = module.ec2.autoscaling_group_name
+#   alert_email_addresses  = var.alert_email_addresses
+#   common_tags            = local.common_tags
+# }
