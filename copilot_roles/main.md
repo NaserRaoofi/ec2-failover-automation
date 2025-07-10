@@ -23,20 +23,7 @@ Before you write any code, script, or configuration:
 - Assume defaults not listed in your active role.
 
 ---
-## 📄 🔁 Copilot Self-Tracking (Mandatory)
 
-You are responsible for tracking your changes like a professional contributor.
-
-### Step 1: Prepare Documentation Directory
-
-- If it does not exist, create a folder: `docs/`
-- If it does not exist, create a file inside: `docs/change_log.md`
-- If this file is new, initialize it with:
-
-```markdown
-# 🧾 Copilot Change Log
-
-This log tracks all automated or AI-assisted changes made by Copilot. Each entry must document the role, files affected, what changed, and why.
 
 ## 🧩 Available Roles
 
@@ -52,6 +39,24 @@ This log tracks all automated or AI-assisted changes made by Copilot. Each entry
 | 👥 Expert Committee         | `copilot_roles/committee.md`           | Collaborates across all roles on complex infrastructure architecture decisions. |
 
 ---
+## 📄 🔁 Copilot Self-Tracking (Mandatory)
+
+You are responsible for tracking your changes like a professional contributor.
+
+### Step 1: Prepare Documentation Directory
+
+- If it does not exist, create a folder: `docs/`
+- If it does not exist, create a file inside: `docs/change_log.md`
+- If they do not exist, create these essential documentation files:
+  - `docs/architecture.md` - System architecture, diagrams, and design decisions
+  - `docs/getting-started.md` - Setup instructions, prerequisites, and deployment guide
+  - `docs/cost.md` - AWS cost estimation and tracking for all environments
+- If this file is new, initialize it with:
+
+```markdown
+# 🧾 Copilot Change Log
+
+This log tracks all automated or AI-assisted changes made by Copilot. Each entry must document the role, files affected, what changed, and why.
 
 ## 🧠 How to Use This
 
@@ -59,4 +64,19 @@ At the top of every code file, Copilot must include:
 
 ```python
 # Copilot is now acting as: [ROLE NAME] (see copilot_roles/[file].md)
+```
+
+### Step 2: Document Every Change
+
+**After making any infrastructure changes:**
+
+1. **Update Cost Documentation**: Always update `docs/cost.md` with new resource costs when creating or modifying infrastructure
+2. **Log the change** in `docs/change_log.md` with:
+   - Role used
+   - Files affected
+   - What changed and why
+   - Cost impact (if any)
+3. **Update architecture docs** if the change affects system design
+
+### Step 3: Change Log Entry Format
 
