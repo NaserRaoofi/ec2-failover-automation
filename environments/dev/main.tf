@@ -50,23 +50,42 @@ module "networking" {
   common_tags           = local.common_tags
 }
 
-# Load Balancer Module - Commented out for simplified EC2 deployment
-# module "load_balancer" {
-#   source = "../../modules/load_balancer"
-# 
-#   project_name               = var.project_name
-#   environment               = var.environment
-#   vpc_id                    = module.networking.vpc_id
-#   subnet_ids                = module.networking.public_subnet_ids
-#   security_group_id         = module.networking.alb_security_group_id
-#   target_port               = var.target_port
-#   target_protocol           = var.target_protocol
-#   listener_port             = var.listener_port
-#   listener_protocol         = var.listener_protocol
-#   health_check_path         = var.health_check_path
-#   enable_deletion_protection = var.enable_deletion_protection
-#   common_tags               = local.common_tags
-# }
+# Load Balancer Module - Now enabled for Route 53 integration
+module "load_balancer" {
+  source = "../../modules/load_balancer"
+
+  project_name               = var.project_name
+  environment               = var.environment
+  vpc_id                    = module.networking.vpc_id
+  subnet_ids                = module.networking.public_subnet_ids
+  security_group_id         = module.networking.alb_security_group_id
+  target_port               = var.target_port
+  target_protocol           = var.target_protocol
+  listener_port             = var.listener_port
+  listener_protocol         = var.listener_protocol
+  health_check_path         = var.health_check_path
+  enable_deletion_protection = var.enable_deletion_protection
+  target_instance_ids       = [module.ec2.instance_id]
+  common_tags               = local.common_tags
+}
+
+# Route 53 Module - DNS management for load balancer (conditional)
+module "route53" {
+  count  = var.domain_name != null ? 1 : 0
+  source = "../../modules/route53"
+
+  project_name               = var.project_name
+  environment               = var.environment
+  aws_region                = var.aws_region
+  domain_name               = var.domain_name
+  create_hosted_zone        = var.create_hosted_zone
+  create_www_record         = var.create_www_record
+  load_balancer_dns_name    = module.load_balancer.dns_name
+  load_balancer_zone_id     = module.load_balancer.zone_id
+  enable_health_check       = var.enable_health_check
+  health_check_path         = var.health_check_path
+  common_tags               = local.common_tags
+}
 
 # EC2 Module - Updated for simplified configuration
 module "ec2" {

@@ -54,6 +54,12 @@ variable "certificate_arn" {
   default     = null
 }
 
+variable "target_instance_ids" {
+  description = "List of EC2 instance IDs to attach to the target group"
+  type        = list(string)
+  default     = []
+}
+
 variable "enable_deletion_protection" {
   description = "Enable deletion protection for the load balancer"
   type        = bool

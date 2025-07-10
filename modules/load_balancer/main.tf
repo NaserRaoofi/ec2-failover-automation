@@ -1,3 +1,5 @@
+# Copilot is now acting as: DevOps Engineer (see copilot_roles/devops_engineer.md)
+
 # Application Load Balancer
 resource "aws_lb" "main" {
   name               = "${var.project_name}-alb"
@@ -37,6 +39,15 @@ resource "aws_lb_target_group" "main" {
   })
 }
 
+# Target Group Attachment - Connect EC2 to Load Balancer
+resource "aws_lb_target_group_attachment" "main" {
+  count = length(var.target_instance_ids)
+  
+  target_group_arn = aws_lb_target_group.main.arn
+  target_id        = var.target_instance_ids[count.index]
+  port             = var.target_port
+}
+
 # Listener
 resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
@@ -47,8 +58,6 @@ resource "aws_lb_listener" "main" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.main.arn
   }
-
-  tags = var.common_tags
 }
 
 # Optional HTTPS Listener (if certificate is provided)
@@ -65,8 +74,6 @@ resource "aws_lb_listener" "https" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.main.arn
   }
-
-  tags = var.common_tags
 }
 
 # HTTP to HTTPS redirect (if HTTPS listener exists)

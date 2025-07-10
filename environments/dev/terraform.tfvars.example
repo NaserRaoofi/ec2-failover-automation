@@ -25,5 +25,11 @@ listener_protocol          = "HTTP"
 health_check_path          = "/"
 enable_deletion_protection = false
 
+# Route 53 Configuration
+domain_name         = null    # Set to your domain name, e.g., "example.com"
+create_hosted_zone  = false   # Set to true if creating a new hosted zone
+create_www_record   = true    # Create www subdomain record
+enable_health_check = false   # Enable Route 53 health check
+
 # Monitoring Configuration
-alert_email_addresses = []  # Add your email addresses here, e.g., ["admin@example.com"]
+alert_email_addresses = [sirwan.rauofi1370@gmail.com]  # Add your email addresses here, e.g., ["admin@example.com"]

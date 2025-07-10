@@ -77,6 +77,9 @@ variable "user_data" {
     systemctl start httpd
     systemctl enable httpd
     echo "<h1>Hello from $(hostname -f)</h1>" > /var/www/html/index.html
+    echo "<p>Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instance-id)</p>" >> /var/www/html/index.html
+    echo "<p>Availability Zone: $(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)</p>" >> /var/www/html/index.html
+    echo "<p>Load Balancer Test Page - $(date)</p>" >> /var/www/html/index.html
     EOF
 }
 
@@ -101,39 +104,64 @@ variable "associate_public_ip" {
 
 # Load Balancer Configuration
 variable "target_port" {
-  description = "Port for the target group"
+  description = "Target port for load balancer"
   type        = number
   default     = 80
 }
 
 variable "target_protocol" {
-  description = "Protocol for the target group"
+  description = "Target protocol for load balancer"
   type        = string
   default     = "HTTP"
 }
 
 variable "listener_port" {
-  description = "Port for the listener"
+  description = "Listener port for load balancer"
   type        = number
   default     = 80
 }
 
 variable "listener_protocol" {
-  description = "Protocol for the listener"
+  description = "Listener protocol for load balancer"
   type        = string
   default     = "HTTP"
 }
 
 variable "health_check_path" {
-  description = "Path for health check"
+  description = "Health check path for load balancer"
   type        = string
   default     = "/"
 }
 
 variable "enable_deletion_protection" {
-  description = "Enable deletion protection for the load balancer"
+  description = "Enable deletion protection for load balancer"
   type        = bool
   default     = false
+}
+
+# Route 53 Configuration
+variable "domain_name" {
+  description = "Domain name for Route 53 hosted zone"
+  type        = string
+  default     = null  # AWS Architect: Set to null by default, user must provide
+}
+
+variable "create_hosted_zone" {
+  description = "Whether to create a new hosted zone"
+  type        = bool
+  default     = false  # AWS Architect: Use existing domain by default
+}
+
+variable "create_www_record" {
+  description = "Whether to create www subdomain record"
+  type        = bool
+  default     = true
+}
+
+variable "enable_health_check" {
+  description = "Enable Route 53 health check"
+  type        = bool
+  default     = false  # AWS Architect: Disable by default to avoid costs
 }
 
 # Monitoring Configuration
