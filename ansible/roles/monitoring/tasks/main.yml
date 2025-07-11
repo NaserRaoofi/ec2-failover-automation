@@ -1,0 +1,120 @@
+---
+- name: Install CloudWatch Agent
+  yum:
+    name: amazon-cloudwatch-agent
+    state: present
+  when: enable_cloudwatch
+  tags:
+    - monitoring
+    - cloudwatch
+
+- name: Configure CloudWatch Agent
+  template:
+    src: cloudwatch-config.json.j2
+    dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart cloudwatch agent
+  when: enable_cloudwatch
+  tags:
+    - monitoring
+    - cloudwatch
+
+- name: Start and enable CloudWatch Agent
+  systemd:
+    name: amazon-cloudwatch-agent
+    state: started
+    enabled: yes
+  when: enable_cloudwatch
+  tags:
+    - monitoring
+    - services
+
+- name: Install collectd for additional metrics
+  yum:
+    name: collectd
+    state: present
+  tags:
+    - monitoring
+    - collectd
+
+- name: Configure collectd
+  template:
+    src: collectd.conf.j2
+    dest: /etc/collectd.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart collectd
+  tags:
+    - monitoring
+    - collectd
+
+- name: Start and enable collectd
+  systemd:
+    name: collectd
+    state: started
+    enabled: yes
+  tags:
+    - monitoring
+    - services
+
+- name: Create custom monitoring scripts directory
+  file:
+    path: /opt/monitoring
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - monitoring
+    - scripts
+
+- name: Deploy custom monitoring script
+  template:
+    src: system-monitor.sh.j2
+    dest: /opt/monitoring/system-monitor.sh
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - monitoring
+    - scripts
+
+- name: Set up cron job for custom monitoring
+  cron:
+    name: "System monitoring"
+    minute: "*/5"
+    job: "/opt/monitoring/system-monitor.sh >> /var/log/system-monitor.log 2>&1"
+    user: root
+  tags:
+    - monitoring
+    - cron
+
+- name: Create log rotation for monitoring logs
+  copy:
+    content: |
+      /var/log/system-monitor.log {
+          daily
+          missingok
+          rotate 14
+          compress
+          notifempty
+          copytruncate
+          create 0644 root root
+      }
+    dest: /etc/logrotate.d/system-monitor
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - monitoring
+    - logrotate
+
+- name: Log monitoring setup completion
+  lineinfile:
+    path: /var/log/application.log
+    line: "{{ ansible_date_time.iso8601 }}: Monitoring configured via Ansible - CloudWatch: {{ enable_cloudwatch }}, ELK: {{ enable_elk_logging }}"
+  tags:
+    - logging

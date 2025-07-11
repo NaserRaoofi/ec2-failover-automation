@@ -1,0 +1,111 @@
+{
+  "agent": {
+    "run_as_user": "cwagent"
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/messages",
+            "log_group_name": "/aws/ec2/{{ project_name }}/system",
+            "log_stream_name": "{{ ansible_ec2_instance_id | default('localhost') }}/messages",
+            "timezone": "UTC",
+            "retention_in_days": {{ log_retention_days }}
+          },
+          {
+            "file_path": "/var/log/httpd/access_log",
+            "log_group_name": "/aws/ec2/{{ project_name }}/application",
+            "log_stream_name": "{{ ansible_ec2_instance_id | default('localhost') }}/httpd-access",
+            "timezone": "UTC",
+            "retention_in_days": {{ log_retention_days }}
+          },
+          {
+            "file_path": "/var/log/httpd/error_log",
+            "log_group_name": "/aws/ec2/{{ project_name }}/application",
+            "log_stream_name": "{{ ansible_ec2_instance_id | default('localhost') }}/httpd-error",
+            "timezone": "UTC",
+            "retention_in_days": {{ log_retention_days }}
+          },
+          {
+            "file_path": "/var/log/application.log",
+            "log_group_name": "/aws/ec2/{{ project_name }}/application",
+            "log_stream_name": "{{ ansible_ec2_instance_id | default('localhost') }}/application",
+            "timezone": "UTC",
+            "retention_in_days": {{ log_retention_days }}
+          },
+          {
+            "file_path": "/var/log/ansible.log",
+            "log_group_name": "/aws/ec2/{{ project_name }}/automation",
+            "log_stream_name": "{{ ansible_ec2_instance_id | default('localhost') }}/ansible",
+            "timezone": "UTC",
+            "retention_in_days": {{ log_retention_days }}
+          },
+          {
+            "file_path": "/var/log/system-monitor.log",
+            "log_group_name": "/aws/ec2/{{ project_name }}/monitoring",
+            "log_stream_name": "{{ ansible_ec2_instance_id | default('localhost') }}/system-monitor",
+            "timezone": "UTC",
+            "retention_in_days": {{ log_retention_days }}
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "namespace": "{{ cloudwatch_namespace }}/{{ project_name }}",
+    "metrics_collected": {
+      "cpu": {
+        "measurement": [
+          "cpu_usage_idle",
+          "cpu_usage_iowait", 
+          "cpu_usage_user",
+          "cpu_usage_system"
+        ],
+        "metrics_collection_interval": 60,
+        "totalcpu": false
+      },
+      "disk": {
+        "measurement": [
+          "used_percent"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "*"
+        ]
+      },
+      "diskio": {
+        "measurement": [
+          "io_time",
+          "read_bytes",
+          "write_bytes",
+          "reads",
+          "writes"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "*"
+        ]
+      },
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "netstat": {
+        "measurement": [
+          "tcp_established",
+          "tcp_time_wait"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "swap": {
+        "measurement": [
+          "swap_used_percent"
+        ],
+        "metrics_collection_interval": 60
+      }
+    }
+  }
+}

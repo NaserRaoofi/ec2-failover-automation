@@ -1,0 +1,133 @@
+<?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Get system information
+function getSystemInfo() {
+    return [
+        'timestamp' => date('c'),
+        'status' => 'healthy',
+        'server_info' => [
+            'hostname' => gethostname(),
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
+            'php_version' => phpversion(),
+            'load_average' => sys_getloadavg(),
+            'uptime' => shell_exec('uptime -p') ?: 'Unknown'
+        ],
+        'instance_metadata' => [
+            'instance_id' => '{{ ansible_ec2_instance_id | default("Unknown") }}',
+            'availability_zone' => '{{ ansible_ec2_placement_availability_zone | default("Unknown") }}',
+            'region' => '{{ aws_region }}',
+            'environment' => '{{ deployment_environment }}',
+            'project_name' => '{{ project_name }}',
+            'private_ip' => '{{ ansible_default_ipv4.address }}',
+            'public_ip' => '{{ ansible_ec2_public_ipv4 | default("N/A") }}'
+        ],
+        'services' => [
+            'httpd' => checkService('httpd'),
+            'docker' => checkService('docker'),
+            'amazon-cloudwatch-agent' => checkService('amazon-cloudwatch-agent'),
+            'amazon-ssm-agent' => checkService('amazon-ssm-agent')
+        ],
+        'system_resources' => [
+            'disk_usage' => getDiskUsage('/'),
+            'memory_usage' => getMemoryUsage(),
+            'cpu_count' => {{ ansible_processor_vcpus }},
+            'total_memory_gb' => round({{ ansible_memtotal_mb }} / 1024, 2)
+        ],
+        'ansible_info' => [
+            'managed_by' => 'ansible',
+            'last_run' => '{{ ansible_date_time.iso8601 }}',
+            'configuration_source' => 'github',
+            'playbook_version' => 'latest'
+        ],
+        'network_info' => [
+            'interfaces' => getNetworkInterfaces(),
+            'dns_servers' => getDNSServers()
+        ]
+    ];
+}
+
+function checkService($serviceName) {
+    $status = shell_exec("systemctl is-active $serviceName 2>/dev/null");
+    return [
+        'status' => trim($status) ?: 'unknown',
+        'enabled' => trim(shell_exec("systemctl is-enabled $serviceName 2>/dev/null")) ?: 'unknown'
+    ];
+}
+
+function getDiskUsage($path = '/') {
+    $free = disk_free_space($path);
+    $total = disk_total_space($path);
+    $used = $total - $free;
+    $percent = round(($used / $total) * 100, 2);
+    
+    return [
+        'total_gb' => round($total / (1024**3), 2),
+        'used_gb' => round($used / (1024**3), 2),
+        'free_gb' => round($free / (1024**3), 2),
+        'used_percent' => $percent
+    ];
+}
+
+function getMemoryUsage() {
+    $meminfo = file_get_contents('/proc/meminfo');
+    preg_match('/MemTotal:\s+(\d+)\s+kB/', $meminfo, $total);
+    preg_match('/MemFree:\s+(\d+)\s+kB/', $meminfo, $free);
+    preg_match('/MemAvailable:\s+(\d+)\s+kB/', $meminfo, $available);
+    
+    $total_kb = $total[1] ?? 0;
+    $free_kb = $free[1] ?? 0;
+    $available_kb = $available[1] ?? 0;
+    $used_kb = $total_kb - $free_kb;
+    
+    return [
+        'total_gb' => round($total_kb / (1024**2), 2),
+        'used_gb' => round($used_kb / (1024**2), 2),
+        'free_gb' => round($free_kb / (1024**2), 2),
+        'available_gb' => round($available_kb / (1024**2), 2),
+        'used_percent' => $total_kb > 0 ? round(($used_kb / $total_kb) * 100, 2) : 0
+    ];
+}
+
+function getNetworkInterfaces() {
+    $interfaces = [];
+    $output = shell_exec('ip addr show');
+    // Simple parsing - in production you might want more robust parsing
+    if (preg_match_all('/inet (\d+\.\d+\.\d+\.\d+)/', $output, $matches)) {
+        $interfaces = array_unique($matches[1]);
+    }
+    return $interfaces;
+}
+
+function getDNSServers() {
+    $dns = [];
+    if (file_exists('/etc/resolv.conf')) {
+        $resolv = file_get_contents('/etc/resolv.conf');
+        if (preg_match_all('/nameserver\s+(\d+\.\d+\.\d+\.\d+)/', $resolv, $matches)) {
+            $dns = $matches[1];
+        }
+    }
+    return $dns;
+}
+
+// Handle different request methods
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+switch ($method) {
+    case 'GET':
+        $response = getSystemInfo();
+        break;
+    default:
+        http_response_code(405);
+        $response = ['error' => 'Method not allowed', 'allowed_methods' => ['GET']];
+        break;
+}
+
+// Add response time
+$response['response_time_ms'] = round((microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']) * 1000, 2);
+
+echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+?>

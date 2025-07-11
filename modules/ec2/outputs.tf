@@ -1,48 +1,33 @@
 # Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
-# EC2 Module Outputs - Simplified for basic instance
+# EC2 Module Outputs - Launch Template Configuration
 
-output "instance_id" {
-  description = "ID of the EC2 instance"
-  value       = aws_instance.main.id
+output "launch_template_id" {
+  description = "ID of the Launch Template"
+  value       = aws_launch_template.main.id
 }
 
-output "instance_arn" {
-  description = "ARN of the EC2 instance"
-  value       = aws_instance.main.arn
+output "launch_template_arn" {
+  description = "ARN of the Launch Template"
+  value       = aws_launch_template.main.arn
 }
 
-output "instance_public_ip" {
-  description = "Public IP address of the EC2 instance"
-  value       = aws_instance.main.public_ip
+output "launch_template_name" {
+  description = "Name of the Launch Template"
+  value       = aws_launch_template.main.name
 }
 
-output "instance_private_ip" {
-  description = "Private IP address of the EC2 instance"
-  value       = aws_instance.main.private_ip
+output "launch_template_latest_version" {
+  description = "Latest version of the Launch Template"
+  value       = aws_launch_template.main.latest_version
 }
 
-output "instance_public_dns" {
-  description = "Public DNS name of the EC2 instance"
-  value       = aws_instance.main.public_dns
+output "launch_template_default_version" {
+  description = "Default version of the Launch Template"
+  value       = aws_launch_template.main.default_version
 }
 
-output "instance_private_dns" {
-  description = "Private DNS name of the EC2 instance"
-  value       = aws_instance.main.private_dns
-}
-
-output "elastic_ip" {
-  description = "Elastic IP address (if created)"
-  value       = var.associate_public_ip ? aws_eip.main[0].public_ip : null
-}
-
-output "elastic_ip_allocation_id" {
-  description = "Allocation ID of the Elastic IP (if created)"
-  value       = var.associate_public_ip ? aws_eip.main[0].allocation_id : null
-}
-
-# AWS Architect: Useful for SSH access and debugging
+# AWS Architect: Connection information for debugging
 output "ssh_connection_command" {
-  description = "SSH command to connect to the instance"
-  value       = var.key_name != null ? "ssh -i ${var.key_name}.pem ec2-user@${aws_instance.main.public_ip}" : "No key pair specified"
+  description = "SSH command pattern for instances (replace INSTANCE_IP with actual IP)"
+  value       = var.key_name != null ? "ssh -i ${var.key_name}.pem ec2-user@INSTANCE_IP" : "No key pair specified"
 }

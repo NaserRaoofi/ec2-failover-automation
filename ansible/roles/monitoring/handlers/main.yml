@@ -1,0 +1,14 @@
+---
+- name: restart cloudwatch agent
+  systemd:
+    name: amazon-cloudwatch-agent
+    state: restarted
+  tags:
+    - monitoring
+
+- name: restart collectd
+  systemd:
+    name: collectd
+    state: restarted
+  tags:
+    - monitoring

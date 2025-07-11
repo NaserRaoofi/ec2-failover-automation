@@ -1,0 +1,99 @@
+---
+- name: Install Apache HTTP Server
+  yum:
+    name: "{{ web_server }}"
+    state: present
+  tags:
+    - webserver
+    - packages
+
+- name: Install PHP for API endpoints
+  yum:
+    name: 
+      - php
+      - php-json
+      - php-mbstring
+    state: present
+  tags:
+    - webserver
+    - php
+
+- name: Create web content from template
+  template:
+    src: index.html.j2
+    dest: "{{ web_root }}/index.html"
+    owner: "{{ web_user }}"
+    group: "{{ web_group }}"
+    mode: '0644'
+  notify: restart httpd
+  tags:
+    - webserver
+    - content
+
+- name: Create health check endpoint
+  copy:
+    content: "OK"
+    dest: "{{ web_root }}{{ health_check_endpoint }}"
+    owner: "{{ web_user }}"
+    group: "{{ web_group }}"
+    mode: '0644'
+  tags:
+    - webserver
+    - health
+
+- name: Create detailed health check API
+  template:
+    src: health-api.php.j2
+    dest: "{{ web_root }}{{ api_endpoint }}.php"
+    owner: "{{ web_user }}"
+    group: "{{ web_group }}"
+    mode: '0644'
+  tags:
+    - webserver
+    - api
+
+- name: Configure Apache main configuration
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^ServerTokens'
+    line: 'ServerTokens Prod'
+  notify: restart httpd
+  tags:
+    - webserver
+    - security
+
+- name: Configure Apache to hide version information
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^ServerSignature'
+    line: 'ServerSignature Off'
+  notify: restart httpd
+  tags:
+    - webserver
+    - security
+
+- name: Start and enable Apache
+  systemd:
+    name: "{{ web_server }}"
+    state: started
+    enabled: yes
+  tags:
+    - webserver
+    - services
+
+- name: Ensure Apache is accessible on the configured port
+  wait_for:
+    port: "{{ web_port }}"
+    host: "{{ ansible_default_ipv4.address }}"
+    delay: 5
+    timeout: 30
+  tags:
+    - webserver
+    - validation
+
+- name: Log web server setup completion
+  lineinfile:
+    path: /var/log/application.log
+    line: "{{ ansible_date_time.iso8601 }}: Web server configured via Ansible - {{ web_server }} on port {{ web_port }}"
+  tags:
+    - logging

@@ -1,0 +1,94 @@
+---
+- name: Update system packages
+  yum:
+    name: "*"
+    state: latest
+    update_cache: yes
+  tags:
+    - system
+    - updates
+
+- name: Install essential packages
+  yum:
+    name: "{{ essential_packages }}"
+    state: present
+  tags:
+    - system
+    - packages
+
+- name: Start and enable SSM agent
+  systemd:
+    name: amazon-ssm-agent
+    state: started
+    enabled: yes
+  tags:
+    - system
+    - services
+
+- name: Create log files with proper permissions
+  file:
+    path: "{{ item.path }}"
+    state: touch
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ log_files }}"
+  tags:
+    - logging
+    - files
+
+- name: Set up log rotation for application logs
+  copy:
+    content: |
+      {{ item.path }} {
+          daily
+          missingok
+          rotate 7
+          compress
+          notifempty
+          copytruncate
+          create 0644 {{ item.owner }} {{ item.group }}
+      }
+    dest: "/etc/logrotate.d/{{ item.path | basename | regex_replace('\\.log$', '') }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ log_files }}"
+  tags:
+    - logging
+    - logrotate
+
+- name: Configure timezone
+  timezone:
+    name: UTC
+  tags:
+    - system
+    - timezone
+
+- name: Set hostname based on instance metadata
+  hostname:
+    name: "{{ project_name }}-{{ deployment_environment }}-{{ ansible_date_time.epoch }}"
+  tags:
+    - system
+    - hostname
+
+- name: Create ansible user for automation
+  user:
+    name: ansible
+    comment: "Ansible automation user"
+    shell: /bin/bash
+    home: /home/ansible
+    create_home: yes
+    groups: wheel
+    append: yes
+  tags:
+    - users
+    - security
+
+- name: Log common system setup completion
+  lineinfile:
+    path: /var/log/application.log
+    line: "{{ ansible_date_time.iso8601 }}: Common system setup completed via Ansible - {{ project_name }}"
+    create: yes
+  tags:
+    - logging
