@@ -48,3 +48,6 @@ Thumbs.db
 # Backup files
 *.backup
 *.bak
+
+# Copilot roles - development guidance files
+copilot_roles/
