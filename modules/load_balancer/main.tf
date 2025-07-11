@@ -1,4 +1,3 @@
-# Copilot is now acting as: DevOps Engineer (see copilot_roles/devops_engineer.md)
 
 # Application Load Balancer
 resource "aws_lb" "main" {

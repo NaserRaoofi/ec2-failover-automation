@@ -1,0 +1,27 @@
+---
+# Default variables for Docker role
+docker_edition: ce
+docker_packages:
+  - docker-{{ docker_edition }}
+  - docker-{{ docker_edition }}-cli
+  - containerd.io
+
+# Docker daemon configuration
+docker_daemon_options:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  storage-driver: "overlay2"
+
+# Docker users (users to add to docker group)
+docker_users:
+  - ec2-user
+
+# Docker compose
+install_docker_compose: true
+docker_compose_version: "2.20.0"
+
+# Container cleanup
+enable_container_cleanup: true
+cleanup_schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM

@@ -1,4 +1,3 @@
-# Copilot is now acting as: DevSecOps (see copilot_roles/devsecops.md)
 # IAM Module Variables - Security and access control configuration
 
 variable "project_name" {
@@ -58,5 +57,23 @@ variable "secrets_manager_arns" {
 variable "elk_log_shipping_policy_arn" {
   description = "ARN of the ELK log shipping policy to attach to EC2 role"
   type        = string
-  default     = null
+  default     = ""
+}
+
+variable "enable_opensearch" {
+  description = "Enable OpenSearch-related IAM resources"
+  type        = bool
+  default     = false
+}
+
+variable "opensearch_domain_arn" {
+  description = "ARN of the OpenSearch domain for IAM policy resources"
+  type        = string
+  default     = ""
+}
+
+variable "enable_bastion_security_policy" {
+  description = "Enable additional security policy for bastion hosts"
+  type        = bool
+  default     = false
 }

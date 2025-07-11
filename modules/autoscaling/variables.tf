@@ -1,4 +1,3 @@
-# Copilot is now acting as: SRE (see copilot_roles/sre.md)
 # Auto Scaling Module Variables - Scaling and high availability configuration
 
 variable "project_name" {
@@ -33,49 +32,49 @@ variable "target_group_arns" {
   default     = []
 }
 
-# SRE: Health Check Configuration
+# Health Check Configuration
 variable "health_check_type" {
   description = "Type of health check (ELB or EC2)"
   type        = string
-  default     = "ELB"  # SRE: Use ELB health checks for better detection
+  default     = "ELB"  # Use ELB health checks for better detection
 }
 
 variable "health_check_grace_period" {
   description = "Time in seconds after instance launch before checking health"
   type        = number
-  default     = 300  # SRE: 5 minutes for application startup
+  default     = 300  # 5 minutes for application startup
 }
 
-# SRE: Auto Scaling Group Sizing
+# Auto Scaling Group Sizing
 variable "min_size" {
   description = "Minimum number of instances in the Auto Scaling Group"
   type        = number
-  default     = 1  # SRE: Minimum for high availability
+  default     = 1  # Minimum for high availability
 }
 
 variable "max_size" {
   description = "Maximum number of instances in the Auto Scaling Group"
   type        = number
-  default     = 3  # SRE: Allow scaling up for high demand
+  default     = 3  # Allow scaling up for high demand
 }
 
 variable "desired_capacity" {
   description = "Desired number of instances in the Auto Scaling Group"
   type        = number
-  default     = 2  # SRE: Start with 2 instances across AZs
+  default     = 2  # Start with 2 instances across AZs
 }
 
-# SRE: Instance Refresh Configuration
+# Instance Refresh Configuration
 variable "min_healthy_percentage" {
   description = "Minimum percentage of instances that must remain healthy during instance refresh"
   type        = number
-  default     = 50  # SRE: Maintain 50% capacity during updates
+  default     = 50  # Maintain 50% capacity during updates
 }
 
 variable "instance_warmup" {
   description = "Time in seconds for instances to warm up during instance refresh"
   type        = number
-  default     = 300  # SRE: 5 minutes warmup time
+  default     = 300  # 5 minutes warmup time
 }
 
 variable "protect_from_scale_in" {
@@ -84,23 +83,23 @@ variable "protect_from_scale_in" {
   default     = false
 }
 
-# SRE: Scaling Policies Configuration
+# Scaling Policies Configuration
 variable "enable_scaling_policies" {
   description = "Enable automatic scaling policies based on CPU utilization"
   type        = bool
-  default     = false  # SRE: Disabled by default for cost control
+  default     = false  # Disabled by default for cost control
 }
 
 variable "scale_up_cpu_threshold" {
   description = "CPU utilization threshold for scaling up"
   type        = number
-  default     = 70  # SRE: Scale up when CPU > 70%
+  default     = 70  # Scale up when CPU > 70%
 }
 
 variable "scale_down_cpu_threshold" {
   description = "CPU utilization threshold for scaling down"
   type        = number
-  default     = 30  # SRE: Scale down when CPU < 30%
+  default     = 30  # Scale down when CPU < 30%
 }
 
 variable "common_tags" {

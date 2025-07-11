@@ -1,0 +1,22 @@
+---
+# Default variables for webserver role
+web_server: httpd
+web_port: 80
+web_root: /var/www/html
+web_user: apache
+web_group: apache
+enable_ssl: false
+
+# Health check configuration
+health_check_path: /health
+health_check_content: "OK"
+
+# PHP configuration
+enable_php: true
+php_packages:
+  - php
+  - php-json
+  - php-mbstring
+
+# SELinux settings
+selinux_httpd_can_network_connect: true

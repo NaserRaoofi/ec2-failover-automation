@@ -54,11 +54,13 @@ module "networking" {
 module "iam" {
   source = "../../modules/iam"
 
-  project_name               = var.project_name
-  environment               = var.environment
-  enable_sns_publishing     = var.enable_sns_publishing
-  elk_log_shipping_policy_arn = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].log_shipping_policy_arn : null
-  common_tags               = local.common_tags
+  project_name                    = var.project_name
+  environment                    = var.environment
+  enable_sns_publishing          = var.enable_sns_publishing
+  enable_opensearch              = var.enable_elk_stack
+  enable_bastion_security_policy = var.enable_bastion
+  elk_log_shipping_policy_arn    = ""  # Will be attached separately if ELK is enabled
+  common_tags                    = local.common_tags
 }
 
 # Load Balancer Module - Now enabled for Route 53 integration
@@ -106,7 +108,7 @@ module "launch_template" {
   environment                = var.environment
   ami_id                     = data.aws_ami.amazon_linux.id
   instance_type              = var.instance_type
-  key_name                   = var.key_name
+  key_name                   = aws_key_pair.main.key_name
   security_group_ids         = [module.networking.web_security_group_id]
   iam_instance_profile_name  = module.iam.instance_profile_name
   user_data                  = var.user_data
@@ -173,10 +175,77 @@ module "elk" {
   instance_count        = var.opensearch_instance_count
   master_password       = var.opensearch_master_password
   volume_size          = var.opensearch_volume_size
+  enable_zone_awareness = var.opensearch_zone_awareness
   log_retention_days   = var.elk_log_retention_days
+  
+  # Note: Using direct log shipping from EC2 instead of CloudWatch Logs destinations
   
   # Use monitoring SNS topic for alerts if available
   sns_topic_arn = length(module.monitoring.sns_topic_arn) > 0 ? module.monitoring.sns_topic_arn : null
   
   common_tags = local.common_tags
+}
+
+# Separate IAM policy attachment for ELK log shipping (to avoid count dependency)
+resource "aws_iam_role_policy_attachment" "elk_log_shipping_policy_attachment" {
+  count      = var.enable_elk_stack ? 1 : 0
+  role       = module.iam.ec2_role_name
+  policy_arn = module.iam.opensearch_log_shipping_policy_arn
+  
+  depends_on = [module.iam, module.elk]
+}
+
+
+# Create EC2 Key Pair for SSH access to instances
+# This enables troubleshooting, monitoring, and manual intervention when needed
+resource "aws_key_pair" "main" {
+  key_name   = "${var.project_name}-key"
+  public_key = file("${path.module}/ec2-key.pub")  # Use local public key file
+  
+  tags = merge(local.common_tags, {
+    Name        = "${var.project_name}-key"
+    Purpose     = "SSH access for troubleshooting and automation"
+    Environment = var.environment
+  })
+  
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Bastion Host Module - Secure access to private instances
+module "bastion" {
+  source = "../../modules/bastion"
+
+  project_name               = var.project_name
+  environment               = var.environment
+  vpc_id                    = module.networking.vpc_id
+  public_subnet_ids         = module.networking.public_subnet_ids
+  private_subnet_cidrs      = var.private_subnet_cidrs
+  allowed_ssh_cidrs         = var.allowed_ssh_cidrs
+  ami_id                    = data.aws_ami.amazon_linux.id
+  instance_type             = var.bastion_instance_type
+  key_name                  = aws_key_pair.main.key_name
+  iam_instance_profile_name = module.iam.instance_profile_name
+  enable_bastion            = var.enable_bastion
+  enable_bastion_eip        = var.enable_bastion_eip
+  root_volume_size          = var.bastion_root_volume_size
+  root_volume_type          = var.root_volume_type
+  enable_ebs_encryption     = var.enable_ebs_encryption
+  enable_detailed_monitoring = var.enable_detailed_monitoring
+  common_tags               = local.common_tags
+}
+
+# Additional security group rule to allow SSH from bastion to private instances
+# This provides more granular control than VPC-wide access
+resource "aws_security_group_rule" "bastion_to_private_ssh" {
+  count = var.enable_bastion ? 1 : 0
+  
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = module.bastion.bastion_security_group_id
+  security_group_id        = module.networking.web_security_group_id
+  description              = "Allow SSH from bastion host to private instances"
 }

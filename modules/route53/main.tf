@@ -1,4 +1,3 @@
-# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
 # Route 53 Module - DNS management for load balancer integration
 
 # Data source for existing hosted zone (if using existing domain)

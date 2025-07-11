@@ -81,43 +81,43 @@ variable "enable_sns_publishing" {
   default     = false
 }
 
-# SRE: Auto Scaling Group Configuration
+# Auto Scaling Group Configuration
 variable "min_size" {
   description = "Minimum number of instances in the Auto Scaling Group"
   type        = number
-  default     = 1  # SRE: At least 1 instance for availability
+  default     = 1  # At least 1 instance for availability
 }
 
 variable "max_size" {
   description = "Maximum number of instances in the Auto Scaling Group"
   type        = number
-  default     = 3  # SRE: Allow scaling for high demand
+  default     = 3  # Allow scaling for high demand
 }
 
 variable "desired_capacity" {
   description = "Desired number of instances in the Auto Scaling Group"
   type        = number
-  default     = 2  # SRE: Start with 2 instances across AZs for redundancy
+  default     = 2  # Start with 2 instances across AZs for redundancy
 }
 
-# SRE: Health Check Configuration
+# Health Check Configuration
 variable "health_check_type" {
   description = "Type of health check (ELB or EC2)"
   type        = string
-  default     = "ELB"  # SRE: Use ELB health checks for better detection
+  default     = "ELB"  # Use ELB health checks for better detection
 }
 
 variable "health_check_grace_period" {
   description = "Time in seconds after instance launch before checking health"
   type        = number
-  default     = 300  # SRE: 5 minutes for application startup
+  default     = 300  # 5 minutes for application startup
 }
 
-# SRE: Auto Scaling Policies Configuration
+# Auto Scaling Policies Configuration
 variable "enable_scaling_policies" {
   description = "Enable automatic scaling policies based on CPU utilization"
   type        = bool
-  default     = false  # SRE: Disabled by default for cost control in dev
+  default     = false  # Disabled by default for cost control in dev
 }
 
 variable "user_data" {
@@ -444,8 +444,45 @@ variable "opensearch_volume_size" {
   default     = 20
 }
 
+variable "opensearch_zone_awareness" {
+  description = "Enable zone awareness for OpenSearch (requires even number of instances for multi-AZ)"
+  type        = bool
+  default     = false  # Disabled by default for single node dev setup
+}
+
 variable "elk_log_retention_days" {
   description = "CloudWatch log retention in days for ELK"
   type        = number
   default     = 14  # Shorter retention for dev environment
+}
+
+# Bastion Host Configuration
+variable "enable_bastion" {
+  description = "Enable bastion host for secure access to private instances"
+  type        = bool
+  default     = true
+}
+
+variable "enable_bastion_eip" {
+  description = "Enable Elastic IP for bastion host (recommended for production)"
+  type        = bool
+  default     = true
+}
+
+variable "bastion_instance_type" {
+  description = "Instance type for bastion host"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "bastion_root_volume_size" {
+  description = "Root volume size for bastion host in GB"
+  type        = number
+  default     = 20
+}
+
+variable "allowed_ssh_cidrs" {
+  description = "List of CIDR blocks allowed to SSH to bastion host (restrict to your IP)"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]  # WARNING: Restrict this in production!
 }

@@ -1,0 +1,26 @@
+---
+# Default variables for monitoring role
+enable_cloudwatch: true
+enable_elk_logging: true
+log_retention_days: 14
+cloudwatch_namespace: "EC2/CustomMetrics"
+
+# CloudWatch Agent configuration
+cloudwatch_config_path: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+
+# Collectd configuration
+enable_collectd: false
+collectd_interval: 60
+
+# System monitoring thresholds
+cpu_threshold: 80
+memory_threshold: 80
+disk_threshold: 85
+
+# Log paths to monitor
+log_files_to_monitor:
+  - /var/log/httpd/access_log
+  - /var/log/httpd/error_log
+  - /var/log/secure
+  - /var/log/messages
+  - /var/log/application.log

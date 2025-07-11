@@ -1,4 +1,3 @@
-# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
 # Launch Template Module Outputs - Template resource references
 
 output "launch_template_id" {
@@ -26,18 +25,7 @@ output "launch_template_default_version" {
   value       = aws_launch_template.main.default_version
 }
 
-# AWS Architect: Template version outputs (when created)
-output "specific_version_number" {
-  description = "Specific version number (when created)"
-  value       = var.create_specific_version ? aws_launch_template_version.specific[0].version_number : null
-}
-
-output "specific_version_description" {
-  description = "Specific version description (when created)"
-  value       = var.create_specific_version ? aws_launch_template_version.specific[0].description : null
-}
-
-# AWS Architect: Configuration details for reference
+# Configuration details for reference
 output "instance_type" {
   description = "Instance type used in the launch template"
   value       = var.instance_type

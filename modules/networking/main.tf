@@ -134,6 +134,15 @@ resource "aws_security_group" "web" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # SSH access from within VPC for troubleshooting and management
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]  # Only from within VPC for security
+    description = "SSH access from within VPC"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

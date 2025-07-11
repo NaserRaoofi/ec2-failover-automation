@@ -1,0 +1,40 @@
+---
+# Default variables for security role
+# Firewall configuration
+enable_firewall: true
+firewall_allowed_ports:
+  - 22/tcp   # SSH
+  - 80/tcp   # HTTP
+  - 443/tcp  # HTTPS
+
+# SSH hardening
+ssh_port: 22
+ssh_permit_root_login: "no"
+ssh_password_authentication: "no"
+ssh_max_auth_tries: 3
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2
+
+# System security
+disable_unused_services: true
+unused_services:
+  - rpcbind
+  - nfs-client
+
+# File permissions
+secure_tmp_partition: true
+secure_var_log: true
+
+# Audit configuration
+enable_auditd: true
+audit_rules:
+  - "-w /etc/passwd -p wa -k passwd_changes"
+  - "-w /etc/shadow -p wa -k shadow_changes"
+  - "-w /etc/group -p wa -k group_changes"
+  - "-w /etc/sudoers -p wa -k sudoers_changes"
+
+# Fail2ban configuration
+enable_fail2ban: false
+fail2ban_jails:
+  - sshd
+  - httpd

@@ -67,7 +67,7 @@
 
 - name: Set hostname based on instance metadata
   hostname:
-    name: "{{ project_name }}-{{ deployment_environment }}-{{ ansible_date_time.epoch }}"
+    name: "{{ project_name }}-{{ environment }}-{{ ansible_date_time.epoch }}"
   tags:
     - system
     - hostname

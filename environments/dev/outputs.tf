@@ -1,3 +1,5 @@
+# DevOps Environment Outputs
+
 # Networking Outputs
 output "vpc_id" {
   description = "ID of the VPC"
@@ -17,12 +19,12 @@ output "private_subnet_ids" {
 # Load Balancer Outputs
 output "load_balancer_dns_name" {
   description = "DNS name of the load balancer"
-  value       = module.load_balancer.dns_name
+  value       = module.load_balancer.load_balancer_dns_name
 }
 
 output "load_balancer_zone_id" {
   description = "Zone ID of the load balancer"
-  value       = module.load_balancer.zone_id
+  value       = module.load_balancer.load_balancer_zone_id
 }
 
 output "load_balancer_arn" {
@@ -74,9 +76,9 @@ output "opensearch_endpoint" {
   value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_endpoint : null
 }
 
-output "opensearch_kibana_endpoint" {
-  description = "OpenSearch Kibana endpoint"
-  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_kibana_endpoint : null
+output "opensearch_dashboard_endpoint" {
+  description = "OpenSearch Dashboards endpoint URL"
+  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_dashboard_endpoint : null
 }
 
 output "opensearch_domain_endpoint" {
@@ -118,4 +120,30 @@ output "main_record_fqdn" {
 output "www_record_fqdn" {
   description = "FQDN of the www A record"
   value       = var.domain_name != null ? module.route53[0].www_record_fqdn : null
+}
+
+# Bastion Host Outputs
+output "bastion_instance_id" {
+  description = "ID of the bastion host instance"
+  value       = module.bastion.bastion_instance_id
+}
+
+output "bastion_public_ip" {
+  description = "Public IP address of the bastion host"
+  value       = module.bastion.bastion_public_ip
+}
+
+output "bastion_elastic_ip" {
+  description = "Elastic IP address of the bastion host"
+  value       = module.bastion.bastion_elastic_ip
+}
+
+output "bastion_security_group_id" {
+  description = "ID of the bastion host security group"
+  value       = module.bastion.bastion_security_group_id
+}
+
+output "ssh_connection_command" {
+  description = "SSH command to connect to bastion host"
+  value       = module.bastion.ssh_connection_command
 }
