@@ -1,0 +1,76 @@
+---
+- name: Install Docker
+  yum:
+    name: docker
+    state: present
+  when: enable_docker
+  tags:
+    - docker
+    - packages
+
+- name: Start and enable Docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+  when: enable_docker
+  tags:
+    - docker
+    - services
+
+- name: Add users to docker group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users }}"
+  when: enable_docker
+  tags:
+    - docker
+    - users
+
+- name: Install Docker Compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+    owner: root
+    group: root
+  when: enable_docker
+  tags:
+    - docker
+    - docker-compose
+
+- name: Create symbolic link for docker-compose
+  file:
+    src: /usr/local/bin/docker-compose
+    dest: /usr/bin/docker-compose
+    state: link
+  when: enable_docker
+  tags:
+    - docker
+    - docker-compose
+
+- name: Test Docker installation
+  shell: docker --version
+  register: docker_version
+  when: enable_docker
+  tags:
+    - docker
+    - validation
+
+- name: Test Docker Compose installation
+  shell: docker-compose --version
+  register: docker_compose_version_output
+  when: enable_docker
+  tags:
+    - docker
+    - validation
+
+- name: Log Docker setup completion
+  lineinfile:
+    path: /var/log/application.log
+    line: "{{ ansible_date_time.iso8601 }}: Docker configured via Ansible - Version: {{ docker_version.stdout | default('Unknown') }}"
+  when: enable_docker
+  tags:
+    - logging

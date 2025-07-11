@@ -1,0 +1,59 @@
+---
+- name: Add NodeSource repository for Node.js {{ nodejs_version }}
+  shell: |
+    curl -fsSL https://rpm.nodesource.com/setup_{{ nodejs_version }}.x | bash -
+  args:
+    creates: /etc/yum.repos.d/nodesource-el*.repo
+  tags:
+    - nodejs
+    - repository
+
+- name: Install Node.js
+  yum:
+    name: nodejs
+    state: present
+  tags:
+    - nodejs
+    - packages
+
+- name: Install global npm packages
+  npm:
+    name: "{{ item }}"
+    global: yes
+    state: present
+  loop: "{{ npm_global_packages }}"
+  tags:
+    - nodejs
+    - npm
+
+- name: Create Node.js applications directory
+  file:
+    path: /opt/nodejs-apps
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+  tags:
+    - nodejs
+    - directories
+
+- name: Test Node.js installation
+  shell: node --version
+  register: node_version
+  tags:
+    - nodejs
+    - validation
+
+- name: Test npm installation
+  shell: npm --version
+  register: npm_version
+  tags:
+    - nodejs
+    - validation
+
+- name: Log Node.js setup completion
+  lineinfile:
+    path: /var/log/application.log
+    line: "{{ ansible_date_time.iso8601 }}: Node.js {{ nodejs_version }} installed via Ansible - Node: {{ node_version.stdout | default('Unknown') }}, NPM: {{ npm_version.stdout | default('Unknown') }}"
+  tags:
+    - logging

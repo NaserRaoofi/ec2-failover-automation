@@ -29,7 +29,18 @@ variable "security_group_id" {
 }
 
 variable "subnet_id" {
-  description = "Subnet ID for EC2 instance placement"
+  description = "Subnet ID for EC2 instance placement (deprecated - use subnet_ids)"
+  type        = string
+  default     = null
+}
+
+variable "subnet_ids" {
+  description = "List of subnet IDs for Launch Template (used by Auto Scaling module)"
+  type        = list(string)
+}
+
+variable "iam_instance_profile_name" {
+  description = "IAM instance profile name for EC2 instances"
   type        = string
 }
 
@@ -79,4 +90,10 @@ variable "associate_public_ip" {
   description = "Associate an Elastic IP address"
   type        = bool
   default     = false  # AWS Architect: Avoid unnecessary costs
+}
+
+variable "enable_sns_publishing" {
+  description = "Enable SNS publishing permissions for EC2 instances"
+  type        = bool
+  default     = false
 }

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ project_name }} - {{ deployment_environment | upper }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container { 
+            background-color: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 2.5em;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        .ansible-badge {
+            background: #EE0000;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px; 
+            border-radius: 10px; 
+            border-left: 5px solid #2196F3;
+        }
+        .ansible-card { border-left-color: #EE0000; }
+        .status-card { border-left-color: #4CAF50; }
+        .monitoring-card { border-left-color: #9C27B0; }
+        .success { color: #4CAF50; font-weight: bold; }
+        .info { color: #2196F3; }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 5px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .online { background-color: #4CAF50; }
+        .offline { background-color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚀 {{ project_name | upper }}</div>
+            <p class="success">High Availability • Auto Scaling • ELK Logging • Ansible Managed</p>
+            <div class="ansible-badge">⚡ Powered by Ansible</div>
+        </div>
+        
+        <div class="grid">
+            <div class="card status-card">
+                <h3>📊 Instance Information</h3>
+                <div class="metric">
+                    <span>Instance ID:</span>
+                    <span class="info">{{ ansible_ec2_instance_id | default('Not available') }}</span>
+                </div>
+                <div class="metric">
+                    <span>Availability Zone:</span>
+                    <span class="info">{{ ansible_ec2_placement_availability_zone | default('Unknown') }}</span>
+                </div>
+                <div class="metric">
+                    <span>Region:</span>
+                    <span class="info">{{ aws_region }}</span>
+                </div>
+                <div class="metric">
+                    <span>Private IP:</span>
+                    <span class="info">{{ ansible_default_ipv4.address }}</span>
+                </div>
+                <div class="metric">
+                    <span>Environment:</span>
+                    <span class="info">{{ deployment_environment | upper }}</span>
+                </div>
+                <div class="metric">
+                    <span>Hostname:</span>
+                    <span class="info">{{ ansible_hostname }}</span>
+                </div>
+            </div>
+            
+            <div class="card ansible-card">
+                <h3>⚡ Ansible Automation</h3>
+                <div class="metric">
+                    <span>Configuration Management:</span>
+                    <span class="success"><span class="status-indicator online"></span>Active</span>
+                </div>
+                <div class="metric">
+                    <span>Playbook Execution:</span>
+                    <span class="success"><span class="status-indicator online"></span>Complete</span>
+                </div>
+                <div class="metric">
+                    <span>GitHub Integration:</span>
+                    <span class="success"><span class="status-indicator online"></span>Connected</span>
+                </div>
+                <div class="metric">
+                    <span>Last Run:</span>
+                    <span class="info">{{ ansible_date_time.iso8601 }}</span>
+                </div>
+                <div class="metric">
+                    <span>Ansible Version:</span>
+                    <span class="info">{{ ansible_version.full }}</span>
+                </div>
+            </div>
+            
+            <div class="card monitoring-card">
+                <h3>🔍 System Status</h3>
+                <div class="metric">
+                    <span>Web Server ({{ web_server }}):</span>
+                    <span class="success"><span class="status-indicator online"></span>Running</span>
+                </div>
+                <div class="metric">
+                    <span>Auto Scaling:</span>
+                    <span class="success"><span class="status-indicator online"></span>Enabled</span>
+                </div>
+                <div class="metric">
+                    <span>Load Balancer:</span>
+                    <span class="success"><span class="status-indicator online"></span>Registered</span>
+                </div>
+                <div class="metric">
+                    <span>CloudWatch Monitoring:</span>
+                    <span class="success"><span class="status-indicator online"></span>Active</span>
+                </div>
+                <div class="metric">
+                    <span>System Uptime:</span>
+                    <span class="info">{{ ansible_uptime_seconds | int | int // 3600 }}h {{ (ansible_uptime_seconds | int % 3600) // 60 }}m</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>🛠️ Installed Services & Tools</h3>
+            <div class="grid">
+                <div>
+                    <h4>Web Services:</h4>
+                    <ul>
+                        <li>Apache HTTP Server ({{ web_server }})</li>
+                        <li>PHP Runtime with Extensions</li>
+                        <li>Health Check APIs</li>
+                        <li>Performance Monitoring</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Development Tools:</h4>
+                    <ul>
+                        <li>Docker Engine {% if enable_docker %}✅{% else %}❌{% endif %}</li>
+                        <li>Node.js {{ nodejs_version }} Runtime</li>
+                        <li>Git Version Control</li>
+                        <li>System Monitoring Tools</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>AWS Integration:</h4>
+                    <ul>
+                        <li>CloudWatch Agent {% if enable_cloudwatch %}✅{% else %}❌{% endif %}</li>
+                        <li>SSM Agent for Management</li>
+                        <li>ELK Logging {% if enable_elk_logging %}✅{% else %}❌{% endif %}</li>
+                        <li>Auto Scaling Group</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>🔗 Quick Links & Endpoints</h3>
+            <div class="grid">
+                <div>
+                    <h4>Health Checks:</h4>
+                    <ul>
+                        <li><a href="{{ health_check_endpoint }}">Health Check</a> - Simple status</li>
+                        <li><a href="{{ api_endpoint }}.php">API Endpoint</a> - Detailed system info</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>System Information:</h4>
+                    <ul>
+                        <li><strong>OS:</strong> {{ ansible_distribution }} {{ ansible_distribution_version }}</li>
+                        <li><strong>Kernel:</strong> {{ ansible_kernel }}</li>
+                        <li><strong>Architecture:</strong> {{ ansible_architecture }}</li>
+                        <li><strong>CPU Cores:</strong> {{ ansible_processor_vcpus }}</li>
+                        <li><strong>Memory:</strong> {{ (ansible_memtotal_mb / 1024) | round(2) }} GB</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; font-style: italic; color: #666;">
+            <p><strong>🤖 Configured by Ansible at:</strong> {{ ansible_date_time.iso8601 }}</p>
+            <p><strong>🌐 Project:</strong> {{ project_name }} | <strong>🏷️ Environment:</strong> {{ deployment_environment | upper }}</p>
+        </div>
+    </div>
+</body>
+</html>

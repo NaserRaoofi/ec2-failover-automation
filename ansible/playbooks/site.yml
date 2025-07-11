@@ -1,0 +1,53 @@
+---
+- name: Configure EC2 Instance for High Availability Infrastructure
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    project_name: "{{ ansible_env.PROJECT_NAME | default('ec2-failover') }}"
+    environment: "{{ ansible_env.ENVIRONMENT | default('dev') }}"
+    
+  pre_tasks:
+    - name: Update package cache
+      yum:
+        update_cache: yes
+        
+    - name: Create application log directory
+      file:
+        path: /var/log
+        state: directory
+        mode: '0755'
+      
+  roles:
+    - common          # Essential system packages and configuration
+    - webserver       # Apache HTTP server with health checks
+    - monitoring      # CloudWatch agent and log shipping
+    - docker          # Docker engine for containerized apps
+    - nodejs          # Node.js runtime for modern applications
+    - security        # Basic security hardening
+    
+  post_tasks:
+    - name: Gather service facts
+      service_facts:
+      
+    - name: Final system check - Verify critical services
+      debug:
+        msg: |
+          Service Status Check:
+          - HTTPD: {{ ansible_facts.services['httpd.service']['state'] | default('not found') }}
+          - Docker: {{ ansible_facts.services['docker.service']['state'] | default('not found') }}
+          - CloudWatch Agent: {{ ansible_facts.services['amazon-cloudwatch-agent.service']['state'] | default('not found') }}
+      
+    - name: Log configuration completion
+      lineinfile:
+        path: /var/log/application.log
+        line: "{{ ansible_date_time.iso8601 }}: Ansible configuration completed successfully - {{ project_name }} {{ environment }}"
+        create: yes
+        mode: '0644'
+
+    - name: Create completion marker
+      file:
+        path: /opt/ansible/.ansible_completed
+        state: touch
+        mode: '0644'

@@ -50,6 +50,17 @@ module "networking" {
   common_tags           = local.common_tags
 }
 
+# IAM Module - Centralized IAM resource management
+module "iam" {
+  source = "../../modules/iam"
+
+  project_name               = var.project_name
+  environment               = var.environment
+  enable_sns_publishing     = var.enable_sns_publishing
+  elk_log_shipping_policy_arn = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].log_shipping_policy_arn : null
+  common_tags               = local.common_tags
+}
+
 # Load Balancer Module - Now enabled for Route 53 integration
 module "load_balancer" {
   source = "../../modules/load_balancer"
@@ -65,7 +76,7 @@ module "load_balancer" {
   listener_protocol         = var.listener_protocol
   health_check_path         = var.health_check_path
   enable_deletion_protection = var.enable_deletion_protection
-  target_instance_ids       = [module.ec2.instance_id]
+  target_instance_ids       = []  # Auto Scaling Group will manage target registration
   common_tags               = local.common_tags
 }
 
@@ -87,36 +98,85 @@ module "route53" {
   common_tags               = local.common_tags
 }
 
-# EC2 Module - Updated for simplified configuration
-module "ec2" {
-  source = "../../modules/ec2"
+# Launch Template Module - Instance Configuration
+module "launch_template" {
+  source = "../../modules/launch_template"
 
-  project_name        = var.project_name
-  environment        = var.environment
-  ami_id             = data.aws_ami.amazon_linux.id
-  instance_type      = var.instance_type
-  key_name           = var.key_name
-  security_group_id  = module.networking.web_security_group_id
-  subnet_id          = module.networking.private_subnet_ids[0]  # Use first private subnet
-  user_data          = var.user_data
-  common_tags        = local.common_tags
+  project_name                = var.project_name
+  environment                = var.environment
+  ami_id                     = data.aws_ami.amazon_linux.id
+  instance_type              = var.instance_type
+  key_name                   = var.key_name
+  security_group_ids         = [module.networking.web_security_group_id]
+  iam_instance_profile_name  = module.iam.instance_profile_name
+  user_data                  = var.user_data
+  common_tags                = local.common_tags
   
-  # Optional configurations
+  # Storage and monitoring configurations
   enable_detailed_monitoring = var.enable_detailed_monitoring
   root_volume_size          = var.root_volume_size
-  associate_public_ip       = var.associate_public_ip
+  root_volume_type          = var.root_volume_type
+  enable_ebs_encryption     = var.enable_ebs_encryption
 }
 
-# Monitoring Module - Commented out for simplified EC2 deployment
-# module "monitoring" {
-#   source = "../../modules/monitoring"
-# 
-#   project_name            = var.project_name
-#   environment            = var.environment
-#   aws_region             = var.aws_region
-#   load_balancer_name     = module.load_balancer.load_balancer_arn
-#   target_group_name      = module.load_balancer.target_group_arn
-#   autoscaling_group_name = module.ec2.autoscaling_group_name
-#   alert_email_addresses  = var.alert_email_addresses
-#   common_tags            = local.common_tags
-# }
+# Auto Scaling Module - High Availability and Automatic Failover
+module "autoscaling" {
+  source = "../../modules/autoscaling"
+
+  project_name           = var.project_name
+  environment           = var.environment
+  launch_template_id    = module.launch_template.launch_template_id
+  subnet_ids            = module.networking.private_subnet_ids
+  target_group_arns     = [module.load_balancer.target_group_arn]
+  common_tags           = local.common_tags
+  
+  # Auto Scaling Group configuration
+  min_size                  = var.min_size
+  max_size                  = var.max_size
+  desired_capacity          = var.desired_capacity
+  health_check_type         = var.health_check_type
+  health_check_grace_period = var.health_check_grace_period
+  
+  # Optional scaling features
+  enable_scaling_policies = var.enable_scaling_policies
+}
+
+# Monitoring Module - Enabled for comprehensive observability
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  project_name            = var.project_name
+  environment            = var.environment
+  aws_region             = var.aws_region
+  load_balancer_name     = module.load_balancer.load_balancer_arn
+  target_group_name      = module.load_balancer.target_group_arn
+  autoscaling_group_name = module.autoscaling.autoscaling_group_name
+  alert_email_addresses  = var.alert_email_addresses
+  common_tags            = local.common_tags
+}
+
+# ELK Stack Module - Centralized Logging and Analytics
+module "elk" {
+  count  = var.enable_elk_stack ? 1 : 0
+  source = "../../modules/elk"
+
+  project_name           = var.project_name
+  vpc_id                 = module.networking.vpc_id
+  private_subnet_ids     = module.networking.private_subnet_ids
+  allowed_security_groups = [
+    module.networking.web_security_group_id,
+    module.networking.alb_security_group_id
+  ]
+  
+  # OpenSearch configuration
+  instance_type         = var.opensearch_instance_type
+  instance_count        = var.opensearch_instance_count
+  master_password       = var.opensearch_master_password
+  volume_size          = var.opensearch_volume_size
+  log_retention_days   = var.elk_log_retention_days
+  
+  # Use monitoring SNS topic for alerts if available
+  sns_topic_arn = length(module.monitoring.sns_topic_arn) > 0 ? module.monitoring.sns_topic_arn : null
+  
+  common_tags = local.common_tags
+}

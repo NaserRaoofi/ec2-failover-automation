@@ -35,25 +35,20 @@ output "target_group_arn" {
   value       = module.load_balancer.target_group_arn
 }
 
-# EC2 Outputs - Updated for simplified module
-output "ec2_instance_id" {
-  description = "ID of the EC2 instance"
-  value       = module.ec2.instance_id
+# Auto Scaling Group Outputs
+output "autoscaling_group_name" {
+  description = "Name of the Auto Scaling Group"
+  value       = module.autoscaling.autoscaling_group_name
 }
 
-output "ec2_instance_public_ip" {
-  description = "Public IP address of the EC2 instance"
-  value       = module.ec2.instance_public_ip
+output "autoscaling_group_arn" {
+  description = "ARN of the Auto Scaling Group"
+  value       = module.autoscaling.autoscaling_group_arn
 }
 
-output "ec2_instance_private_ip" {
-  description = "Private IP address of the EC2 instance"
-  value       = module.ec2.instance_private_ip
-}
-
-output "ssh_connection_command" {
-  description = "SSH command to connect to the instance"
-  value       = module.ec2.ssh_connection_command
+output "launch_template_id" {
+  description = "ID of the Launch Template"
+  value       = module.launch_template.launch_template_id
 }
 
 # Application URL
@@ -62,16 +57,42 @@ output "application_url" {
   value       = "http://${module.load_balancer.load_balancer_dns_name}"
 }
 
-# Monitoring Outputs - Commented out for simplified deployment
-# output "sns_topic_arn" {
-#   description = "ARN of the SNS topic for alerts"
-#   value       = module.monitoring.sns_topic_arn
-# }
-# 
-# output "dashboard_url" {
-#   description = "URL of the CloudWatch dashboard"
-#   value       = module.monitoring.dashboard_url
-# }
+# Monitoring Outputs
+output "sns_topic_arn" {
+  description = "ARN of the SNS topic for alerts"
+  value       = module.monitoring.sns_topic_arn
+}
+
+output "dashboard_url" {
+  description = "URL of the CloudWatch dashboard"
+  value       = module.monitoring.dashboard_url
+}
+
+# ELK Stack Outputs
+output "opensearch_endpoint" {
+  description = "OpenSearch cluster endpoint"
+  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_endpoint : null
+}
+
+output "opensearch_kibana_endpoint" {
+  description = "OpenSearch Kibana endpoint"
+  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_kibana_endpoint : null
+}
+
+output "opensearch_domain_endpoint" {
+  description = "OpenSearch domain HTTPS endpoint"
+  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_domain_endpoint : null
+}
+
+output "application_log_group_name" {
+  description = "CloudWatch log group for application logs"
+  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].application_log_group_name : null
+}
+
+output "system_log_group_name" {
+  description = "CloudWatch log group for system logs"
+  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].system_log_group_name : null
+}
 
 # Route 53 Outputs
 output "domain_name" {

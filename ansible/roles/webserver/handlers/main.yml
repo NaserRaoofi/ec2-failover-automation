@@ -1,0 +1,14 @@
+---
+- name: restart httpd
+  systemd:
+    name: httpd
+    state: restarted
+  tags:
+    - webserver
+
+- name: reload httpd
+  systemd:
+    name: httpd
+    state: reloaded
+  tags:
+    - webserver

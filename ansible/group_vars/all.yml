@@ -1,0 +1,74 @@
+---
+# Global variables for all hosts
+project_name: "ec2-failover"
+deployment_environment: "dev"
+aws_region: "us-east-1"
+
+# Web server configuration
+web_server: "httpd"
+web_port: 80
+web_root: "/var/www/html"
+enable_ssl: false
+web_user: "apache"
+web_group: "apache"
+
+# Monitoring configuration
+enable_cloudwatch: true
+enable_elk_logging: true
+log_retention_days: 14
+cloudwatch_namespace: "EC2/CustomMetrics"
+
+# Application configuration
+enable_docker: true
+docker_users:
+  - ec2-user
+docker_compose_version: "2.21.0"
+
+# Node.js configuration
+nodejs_version: "18"
+npm_global_packages:
+  - pm2
+  - nodemon
+
+# Security configuration
+enable_firewall: false
+ssh_port: 22
+allow_root_login: false
+disable_ipv6: false
+
+# System packages
+essential_packages:
+  - htop
+  - iotop
+  - iftop
+  - tcpdump
+  - strace
+  - lsof
+  - sysstat
+  - bind-utils
+  - net-tools
+  - yum-utils
+  - amazon-ssm-agent
+  - collectd
+  - nc
+  - telnet
+  - tree
+  - vim
+  - git
+  - curl
+  - wget
+
+# Logging configuration
+log_files:
+  - path: "/var/log/application.log"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  - path: "/var/log/ansible.log"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+# Health check configuration
+health_check_endpoint: "/health"
+api_endpoint: "/api"
