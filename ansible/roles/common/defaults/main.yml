@@ -1,0 +1,28 @@
+---
+# Default variables for common role
+essential_packages:
+  - wget
+  - curl
+  - unzip
+  - git
+  - vim
+  - nano
+  - htop
+  - tree
+  - jq
+  - awscli
+  - python3
+  - python3-pip
+
+log_files:
+  - path: /var/log/application.log
+    owner: root
+    group: root
+    mode: '0644'
+  - path: /var/log/ansible.log
+    owner: root
+    group: root
+    mode: '0644'
+
+# Service timeouts
+service_restart_timeout: 30

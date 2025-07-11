@@ -1,4 +1,3 @@
-# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
 # Route 53 Module Variables - DNS management configuration
 
 variable "project_name" {
@@ -24,7 +23,7 @@ variable "domain_name" {
 variable "create_hosted_zone" {
   description = "Whether to create a new hosted zone or use existing"
   type        = bool
-  default     = false  # AWS Architect: Use existing domain by default
+  default     = false  # Use existing domain by default
 }
 
 variable "create_www_record" {
@@ -46,7 +45,7 @@ variable "load_balancer_zone_id" {
 variable "enable_health_check" {
   description = "Enable Route 53 health check"
   type        = bool
-  default     = false  # AWS Architect: Disable by default to avoid costs
+  default     = false  # Disable by default to avoid costs
 }
 
 variable "health_check_port" {
@@ -79,7 +78,7 @@ variable "common_tags" {
   default     = {}
 }
 
-# AWS Architect: Additional Route 53 configuration options
+# Additional Route 53 configuration options
 variable "ttl" {
   description = "TTL for DNS records"
   type        = number
@@ -89,7 +88,7 @@ variable "ttl" {
 variable "enable_dnssec" {
   description = "Enable DNSSEC for the hosted zone"
   type        = bool
-  default     = false  # AWS Architect: Disable by default for simplicity
+  default     = false  # Disable by default for simplicity
 }
 
 variable "certificate_arn" {

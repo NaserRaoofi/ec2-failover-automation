@@ -1,4 +1,3 @@
-# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
 # Route 53 Module Outputs - DNS information for other modules
 
 output "hosted_zone_id" {
@@ -41,7 +40,7 @@ output "health_check_cloudwatch_alarm_arn" {
   value       = var.enable_health_check ? aws_cloudwatch_metric_alarm.health_check_failure[0].arn : null
 }
 
-# AWS Architect: Additional useful outputs
+# Additional useful outputs
 output "hosted_zone_arn" {
   description = "ARN of the hosted zone"
   value       = var.create_hosted_zone ? aws_route53_zone.main[0].arn : null

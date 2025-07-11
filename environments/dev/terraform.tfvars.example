@@ -33,3 +33,10 @@ enable_health_check = false   # Enable Route 53 health check
 
 # Monitoring Configuration
 alert_email_addresses = [sirwan.rauofi1370@gmail.com]  # Add your email addresses here, e.g., ["admin@example.com"]
+
+# Bastion Host Configuration
+enable_bastion      = true
+enable_bastion_eip  = true
+bastion_instance_type = "t3.micro"
+bastion_root_volume_size = 20
+allowed_ssh_cidrs   = ["0.0.0.0/0"]  # IMPORTANT: Replace with your public IP for security!

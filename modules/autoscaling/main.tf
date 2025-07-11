@@ -1,4 +1,3 @@
-# Copilot is now acting as: SRE (see copilot_roles/sre.md)
 # Auto Scaling Module - Automatic instance replacement and high availability
 
 # AWS Auto Scaling Group for automatic failover and scaling
@@ -9,18 +8,18 @@ resource "aws_autoscaling_group" "main" {
   health_check_type   = var.health_check_type
   health_check_grace_period = var.health_check_grace_period
 
-  # SRE Decision: Configurable sizing for different environments
+  # Configurable sizing for different environments
   min_size         = var.min_size
   max_size         = var.max_size
   desired_capacity = var.desired_capacity
 
-  # SRE Decision: Use external launch template
+  # Use external launch template
   launch_template {
     id      = var.launch_template_id
     version = var.launch_template_version
   }
 
-  # SRE Decision: Instance replacement strategy for updates
+  # Instance replacement strategy for updates
   instance_refresh {
     strategy = "Rolling"
     preferences {
@@ -29,10 +28,10 @@ resource "aws_autoscaling_group" "main" {
     }
   }
 
-  # SRE Decision: Enable termination protection if specified
+  # Enable termination protection if specified
   protect_from_scale_in = var.protect_from_scale_in
 
-  # SRE Decision: Comprehensive tagging for monitoring and cost allocation
+  # Comprehensive tagging for monitoring and cost allocation
   tag {
     key                 = "Name"
     value               = "${var.project_name}-asg"
@@ -48,7 +47,7 @@ resource "aws_autoscaling_group" "main" {
     }
   }
 
-  # SRE Decision: Additional operational tags
+  # Additional operational tags
   tag {
     key                 = "Environment"
     value               = var.environment
@@ -67,13 +66,13 @@ resource "aws_autoscaling_group" "main" {
     propagate_at_launch = true
   }
 
-  # SRE Decision: Lifecycle hooks for graceful instance handling
+  # Lifecycle hooks for graceful instance handling
   lifecycle {
     create_before_destroy = true
   }
 }
 
-# SRE: Optional scaling policies for automatic scaling based on metrics
+# Optional scaling policies for automatic scaling based on metrics
 resource "aws_autoscaling_policy" "scale_up" {
   count                  = var.enable_scaling_policies ? 1 : 0
   name                   = "${var.project_name}-scale-up"
@@ -96,7 +95,7 @@ resource "aws_autoscaling_policy" "scale_down" {
   policy_type = "SimpleScaling"
 }
 
-# SRE: CloudWatch alarms for automatic scaling (optional)
+# CloudWatch alarms for automatic scaling (optional)
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   count               = var.enable_scaling_policies ? 1 : 0
   alarm_name          = "${var.project_name}-high-cpu"

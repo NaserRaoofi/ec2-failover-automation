@@ -1,4 +1,3 @@
-# Copilot is now acting as: DevOps Engineer (see copilot_roles/devops_engineer.md)
 # ELK Stack Module Outputs
 
 output "opensearch_domain_arn" {
@@ -21,9 +20,9 @@ output "opensearch_endpoint" {
   value       = aws_opensearch_domain.elk.endpoint
 }
 
-output "opensearch_kibana_endpoint" {
-  description = "Domain-specific endpoint for Kibana"
-  value       = aws_opensearch_domain.elk.kibana_endpoint
+output "opensearch_dashboard_endpoint" {
+  description = "Domain-specific endpoint for OpenSearch Dashboards (formerly Kibana)"
+  value       = aws_opensearch_domain.elk.dashboard_endpoint
 }
 
 output "opensearch_domain_endpoint" {
@@ -36,10 +35,8 @@ output "opensearch_security_group_id" {
   value       = aws_security_group.opensearch.id
 }
 
-output "log_shipping_policy_arn" {
-  description = "ARN of the IAM policy for log shipping"
-  value       = aws_iam_policy.log_shipping.arn
-}
+# Note: log_shipping_policy_arn is now managed by the centralized IAM module
+# This follows DevSecOps best practices for centralized security management
 
 output "application_log_group_name" {
   description = "Name of the application CloudWatch log group"
@@ -61,10 +58,7 @@ output "system_log_group_arn" {
   value       = aws_cloudwatch_log_group.system_logs.arn
 }
 
-output "opensearch_log_destination_arn" {
-  description = "ARN of the CloudWatch log destination for OpenSearch"
-  value       = aws_cloudwatch_log_destination.opensearch.arn
-}
+# Note: opensearch_log_destination_arn output removed - using direct log shipping instead
 
 output "cluster_status_alarm_arn" {
   description = "ARN of the cluster status CloudWatch alarm"

@@ -1,7 +1,6 @@
-# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
 # Launch Template Module - Instance Configuration and Template Management
 
-# AWS Architect Decision: Use Launch Template for better flexibility and versioning
+# Use Launch Template for better flexibility and versioning
 # Launch templates support the latest EC2 features and allow for easier updates
 resource "aws_launch_template" "main" {
   name_prefix   = "${var.project_name}-template-"
@@ -9,21 +8,21 @@ resource "aws_launch_template" "main" {
   instance_type = var.instance_type
   key_name      = var.key_name
 
-  # AWS Architect Decision: Security configuration
+  # Security configuration
   vpc_security_group_ids = var.security_group_ids
 
-  # AWS Architect Decision: IAM instance profile for secure AWS service access
+  # IAM instance profile for secure AWS service access
   iam_instance_profile {
     name = var.iam_instance_profile_name
   }
 
-  # AWS Architect Decision: Enable detailed monitoring for better observability
+  # Enable detailed monitoring for better observability
   # Critical for health checks and scaling decisions
   monitoring {
     enabled = var.enable_detailed_monitoring
   }
 
-  # AWS Architect Decision: Use GP3 for better price/performance ratio
+  # Use GP3 for better price/performance ratio
   # GP3 provides 3,000 IOPS baseline vs GP2's burst model
   block_device_mappings {
     device_name = "/dev/xvda"
@@ -38,18 +37,18 @@ resource "aws_launch_template" "main" {
     }
   }
 
-  # AWS Architect Decision: User data for consistent initialization
+  # User data for consistent initialization
   user_data = base64encode(var.user_data)
 
-  # AWS Architect Decision: Instance metadata service configuration
+  # Instance metadata service configuration
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                = "required"  # AWS Architect: Enforce IMDSv2
+    http_tokens                = "required"  # Enforce IMDSv2
     http_put_response_hop_limit = 1
     instance_metadata_tags      = "enabled"
   }
 
-  # AWS Architect Decision: Comprehensive tagging strategy
+  # Comprehensive tagging strategy
   tag_specifications {
     resource_type = "instance"
     tags = merge(var.common_tags, {
@@ -76,7 +75,7 @@ resource "aws_launch_template" "main" {
     })
   }
 
-  # AWS Architect Decision: Use latest template version for updates
+  # Use latest template version for updates
   lifecycle {
     create_before_destroy = true
   }
@@ -87,18 +86,5 @@ resource "aws_launch_template" "main" {
   })
 }
 
-# AWS Architect Decision: Optional template version for specific deployments
-resource "aws_launch_template_version" "specific" {
-  count = var.create_specific_version ? 1 : 0
-  
-  launch_template_id = aws_launch_template.main.id
-  description        = var.version_description
-  
-  # Inherit from default version but allow overrides
-  source_version = "$Default"
-  
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-template-version"
-    Version = var.version_description
-  })
-}
+# Note: Launch template versions are managed automatically by AWS
+# Manual version creation is not needed for Auto Scaling Groups

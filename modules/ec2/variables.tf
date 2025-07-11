@@ -1,4 +1,3 @@
-# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
 # EC2 Module Variables - Simplified for basic instance creation
 
 variable "project_name" {
@@ -14,7 +13,7 @@ variable "ami_id" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t3.micro"  # AWS Architect: Free tier eligible
+  default     = "t3.micro"  # Free tier eligible
 }
 
 variable "key_name" {
@@ -61,35 +60,35 @@ variable "environment" {
   type        = string
 }
 
-# AWS Architect: Additional variables for production-ready configuration
+# Additional variables for production-ready configuration
 variable "enable_detailed_monitoring" {
   description = "Enable detailed monitoring (1-minute metrics)"
   type        = bool
-  default     = false  # AWS Architect: false for cost optimization in dev
+  default     = false  # false for cost optimization in dev
 }
 
 variable "disable_api_termination" {
   description = "Disable API termination protection"
   type        = bool
-  default     = false  # AWS Architect: Allow termination by default for dev
+  default     = false  # Allow termination by default for dev
 }
 
 variable "root_volume_size" {
   description = "Size of the root EBS volume in GB"
   type        = number
-  default     = 8  # AWS Architect: Minimum for most workloads
+  default     = 8  # Minimum for most workloads
 }
 
 variable "backup_enabled" {
   description = "Enable automated backups"
   type        = bool
-  default     = false  # AWS Architect: Disable by default to reduce costs
+  default     = false  # Disable by default to reduce costs
 }
 
 variable "associate_public_ip" {
   description = "Associate an Elastic IP address"
   type        = bool
-  default     = false  # AWS Architect: Avoid unnecessary costs
+  default     = false  # Avoid unnecessary costs
 }
 
 variable "enable_sns_publishing" {

@@ -1,4 +1,3 @@
-# Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md)
 # EC2 Module Outputs - Launch Template Configuration
 
 output "launch_template_id" {
@@ -26,7 +25,7 @@ output "launch_template_default_version" {
   value       = aws_launch_template.main.default_version
 }
 
-# AWS Architect: Connection information for debugging
+# Connection information for debugging
 output "ssh_connection_command" {
   description = "SSH command pattern for instances (replace INSTANCE_IP with actual IP)"
   value       = var.key_name != null ? "ssh -i ${var.key_name}.pem ec2-user@INSTANCE_IP" : "No key pair specified"

@@ -1,0 +1,22 @@
+---
+# Default variables for Node.js role
+nodejs_version: "18"
+nodejs_packages:
+  - nodejs
+  - npm
+
+# NPM configuration
+npm_global_packages:
+  - pm2
+  - nodemon
+
+# Application settings
+nodejs_app_user: node
+nodejs_app_group: node
+nodejs_app_dir: /opt/nodejs
+nodejs_port: 3000
+
+# PM2 configuration
+pm2_app_name: "nodejs-app"
+pm2_instances: 2
+pm2_exec_mode: "cluster"

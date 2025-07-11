@@ -1,4 +1,3 @@
-# Copilot is now acting as: SRE (see copilot_roles/sre.md)
 # Auto Scaling Module Outputs - Scaling resource references
 
 output "autoscaling_group_arn" {
@@ -31,7 +30,7 @@ output "autoscaling_group_desired_capacity" {
   value       = aws_autoscaling_group.main.desired_capacity
 }
 
-# SRE: Scaling policy outputs (when enabled)
+# Scaling policy outputs (when enabled)
 output "scale_up_policy_arn" {
   description = "ARN of the scale up policy"
   value       = var.enable_scaling_policies ? aws_autoscaling_policy.scale_up[0].arn : null
@@ -42,7 +41,7 @@ output "scale_down_policy_arn" {
   value       = var.enable_scaling_policies ? aws_autoscaling_policy.scale_down[0].arn : null
 }
 
-# SRE: CloudWatch alarm outputs (when enabled)
+# CloudWatch alarm outputs (when enabled)
 output "high_cpu_alarm_arn" {
   description = "ARN of the high CPU alarm"
   value       = var.enable_scaling_policies ? aws_cloudwatch_metric_alarm.high_cpu[0].arn : null

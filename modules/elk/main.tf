@@ -1,12 +1,11 @@
-# Copilot is now acting as: DevOps Engineer (see copilot_roles/devops_engineer.md)
 # ELK Stack Module - Centralized Logging and Analytics
 
-# DevOps Decision: Use OpenSearch (AWS managed Elasticsearch) for scalability and managed operations
+# Use OpenSearch (AWS managed Elasticsearch) for scalability and managed operations
 resource "aws_opensearch_domain" "elk" {
   domain_name    = "${var.project_name}-elk"
   engine_version = var.opensearch_version
 
-  # DevOps Decision: Multi-AZ deployment for high availability
+  # Multi-AZ deployment for high availability
   cluster_config {
     instance_type            = var.instance_type
     instance_count          = var.instance_count
@@ -23,7 +22,7 @@ resource "aws_opensearch_domain" "elk" {
     }
   }
 
-  # DevOps Decision: EBS storage for persistent logging data
+  # EBS storage for persistent logging data
   ebs_options {
     ebs_enabled = true
     volume_type = var.volume_type
@@ -32,13 +31,13 @@ resource "aws_opensearch_domain" "elk" {
     throughput  = var.volume_type == "gp3" ? var.volume_throughput : null
   }
 
-  # DevOps Decision: VPC deployment for security
+  # VPC deployment for security
   vpc_options {
     security_group_ids = [aws_security_group.opensearch.id]
-    subnet_ids         = var.private_subnet_ids
+    subnet_ids         = var.enable_zone_awareness ? var.private_subnet_ids : [var.private_subnet_ids[0]]
   }
 
-  # DevOps Decision: Enable encryption at rest and in transit
+  # Enable encryption at rest and in transit
   encrypt_at_rest {
     enabled    = true
     kms_key_id = var.kms_key_id
@@ -53,7 +52,7 @@ resource "aws_opensearch_domain" "elk" {
     tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
   }
 
-  # DevOps Decision: Fine-grained access control for security
+  # Fine-grained access control for security
   advanced_security_options {
     enabled                        = true
     anonymous_auth_enabled         = false
@@ -65,7 +64,7 @@ resource "aws_opensearch_domain" "elk" {
     }
   }
 
-  # DevOps Decision: Configure log publishing for operational visibility
+  # Configure log publishing for operational visibility
   log_publishing_options {
     cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_application.arn
     log_type                 = "ES_APPLICATION_LOGS"
@@ -84,7 +83,7 @@ resource "aws_opensearch_domain" "elk" {
     enabled                  = true
   }
 
-  # DevOps Decision: Automated snapshots for backup
+  # Automated snapshots for backup
   snapshot_options {
     automated_snapshot_start_hour = var.snapshot_start_hour
   }
@@ -98,7 +97,7 @@ resource "aws_opensearch_domain" "elk" {
   depends_on = [aws_iam_service_linked_role.opensearch]
 }
 
-# DevOps Decision: Service-linked role for OpenSearch
+# Service-linked role for OpenSearch
 resource "aws_iam_service_linked_role" "opensearch" {
   aws_service_name = "es.amazonaws.com"
   description      = "Service-linked role for OpenSearch"
@@ -109,7 +108,7 @@ resource "aws_iam_service_linked_role" "opensearch" {
   }
 }
 
-# DevOps Decision: Security group for OpenSearch access
+# Security group for OpenSearch access
 resource "aws_security_group" "opensearch" {
   name_prefix = "${var.project_name}-opensearch-"
   vpc_id      = var.vpc_id
@@ -162,7 +161,7 @@ resource "aws_security_group" "opensearch" {
   }
 }
 
-# DevOps Decision: CloudWatch log groups for OpenSearch logs
+# CloudWatch log groups for OpenSearch logs
 resource "aws_cloudwatch_log_group" "opensearch_application" {
   name              = "/aws/opensearch/domains/${var.project_name}-elk/application-logs"
   retention_in_days = var.log_retention_days
@@ -190,7 +189,7 @@ resource "aws_cloudwatch_log_group" "opensearch_index_slow_logs" {
   })
 }
 
-# DevOps Decision: CloudWatch log group for application logs
+# CloudWatch log group for application logs
 resource "aws_cloudwatch_log_group" "application_logs" {
   name              = "/aws/ec2/${var.project_name}/application"
   retention_in_days = var.log_retention_days
@@ -200,7 +199,7 @@ resource "aws_cloudwatch_log_group" "application_logs" {
   })
 }
 
-# DevOps Decision: CloudWatch log group for system logs
+# CloudWatch log group for system logs
 resource "aws_cloudwatch_log_group" "system_logs" {
   name              = "/aws/ec2/${var.project_name}/system"
   retention_in_days = var.log_retention_days
@@ -210,93 +209,86 @@ resource "aws_cloudwatch_log_group" "system_logs" {
   })
 }
 
-# DevOps Decision: IAM policy for log shipping from EC2 to OpenSearch
-resource "aws_iam_policy" "log_shipping" {
-  name        = "${var.project_name}-log-shipping"
-  description = "Policy for shipping logs from EC2 to OpenSearch"
+# CloudWatch log resource access policies for OpenSearch
+data "aws_caller_identity" "current" {}
 
-  policy = jsonencode({
+resource "aws_cloudwatch_log_resource_policy" "opensearch_application" {
+  policy_name = "${var.project_name}-opensearch-application-policy"
+
+  policy_document = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = [
-          "es:ESHttpPost",
-          "es:ESHttpPut",
-          "es:ESHttpGet"
-        ]
-        Resource = "${aws_opensearch_domain.elk.arn}/*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogStreams"
-        ]
-        Resource = [
-          aws_cloudwatch_log_group.application_logs.arn,
-          aws_cloudwatch_log_group.system_logs.arn,
-          "${aws_cloudwatch_log_group.application_logs.arn}:*",
-          "${aws_cloudwatch_log_group.system_logs.arn}:*"
-        ]
-      }
-    ]
-  })
-
-  tags = var.common_tags
-}
-
-# DevOps Decision: CloudWatch Logs subscription filter to ship logs to OpenSearch
-resource "aws_cloudwatch_log_destination" "opensearch" {
-  name       = "${var.project_name}-opensearch-destination"
-  role_arn   = aws_iam_role.log_destination.arn
-  target_arn = aws_opensearch_domain.elk.arn
-
-  tags = var.common_tags
-}
-
-# DevOps Decision: IAM role for CloudWatch Logs destination
-resource "aws_iam_role" "log_destination" {
-  name = "${var.project_name}-log-destination-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "logs.amazonaws.com"
+          Service = "es.amazonaws.com"
         }
+        Action = [
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream"
+        ]
+        Resource = "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/opensearch/domains/${var.project_name}-elk/*"
       }
     ]
   })
-
-  tags = var.common_tags
 }
 
-resource "aws_iam_role_policy" "log_destination" {
-  name = "${var.project_name}-log-destination-policy"
-  role = aws_iam_role.log_destination.id
+resource "aws_cloudwatch_log_resource_policy" "opensearch_slow_logs" {
+  policy_name = "${var.project_name}-opensearch-slow-policy"
 
-  policy = jsonencode({
+  policy_document = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
+        Principal = {
+          Service = "es.amazonaws.com"
+        }
         Action = [
-          "es:ESHttpPost",
-          "es:ESHttpPut"
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream"
         ]
-        Resource = "${aws_opensearch_domain.elk.arn}/*"
+        Resource = "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/opensearch/domains/${var.project_name}-elk/*"
       }
     ]
   })
 }
 
-# DevOps Decision: CloudWatch alarms for OpenSearch monitoring
+resource "aws_cloudwatch_log_resource_policy" "opensearch_index_slow" {
+  policy_name = "${var.project_name}-opensearch-index-policy"
+
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "es.amazonaws.com"
+        }
+        Action = [
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream"
+        ]
+        Resource = "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:/aws/opensearch/domains/${var.project_name}-elk/*"
+      }
+    ]
+  })
+}
+
+# IAM policy for log shipping from EC2 to OpenSearch (reference from centralized IAM module)
+# This is now managed in the centralized IAM module for better security governance
+
+# Note: CloudWatch Logs destination to OpenSearch is not directly supported
+# Instead, we'll use Fluent Bit or CloudWatch Agent on EC2 instances to ship logs directly
+# This provides better performance and more control over log processing
+
+# The log groups are created for EC2 instances to use via CloudWatch Agent
+# Logs will be shipped directly from EC2 to OpenSearch using the centralized IAM policies
+
+# CloudWatch alarms for OpenSearch monitoring
 resource "aws_cloudwatch_metric_alarm" "opensearch_cluster_status" {
   alarm_name          = "${var.project_name}-opensearch-cluster-status"
   comparison_operator = "LessThanThreshold"
@@ -337,19 +329,7 @@ resource "aws_cloudwatch_metric_alarm" "opensearch_storage_utilization" {
   tags = var.common_tags
 }
 
-data "aws_caller_identity" "current" {}
-
-# DevOps Decision: CloudWatch log subscription filters to ship logs to OpenSearch
-resource "aws_cloudwatch_log_subscription_filter" "application_logs" {
-  name            = "${var.project_name}-application-logs-filter"
-  log_group_name  = aws_cloudwatch_log_group.application_logs.name
-  filter_pattern  = ""  # Ship all logs
-  destination_arn = aws_cloudwatch_log_destination.opensearch.arn
-}
-
-resource "aws_cloudwatch_log_subscription_filter" "system_logs" {
-  name            = "${var.project_name}-system-logs-filter"
-  log_group_name  = aws_cloudwatch_log_group.system_logs.name
-  filter_pattern  = ""  # Ship all logs
-  destination_arn = aws_cloudwatch_log_destination.opensearch.arn
-}
+# Note: Direct CloudWatch log subscription to OpenSearch is not supported
+# Instead, EC2 instances will use CloudWatch Agent or Fluent Bit to ship logs directly
+# This provides better performance and more granular control over log processing
+# The centralized IAM policies in the IAM module provide the necessary permissions

@@ -1,4 +1,3 @@
-# Copilot is now acting as: DevOps Engineer (see copilot_roles/devops_engineer.md)
 # ELK Stack Module Variables
 
 variable "project_name" {
@@ -159,3 +158,6 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+# Note: log_destination_role_arn is no longer needed since we're using direct log shipping
+# from EC2 instances instead of CloudWatch Logs destinations
