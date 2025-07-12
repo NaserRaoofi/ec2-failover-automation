@@ -70,31 +70,31 @@ output "dashboard_url" {
   value       = module.monitoring.dashboard_url
 }
 
-# ELK Stack Outputs
-output "opensearch_endpoint" {
-  description = "OpenSearch cluster endpoint"
-  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_endpoint : null
-}
+# ELK Stack Outputs - COMMENTED OUT FOR HEALTH CHECK DEBUGGING
+# output "opensearch_endpoint" {
+#   description = "OpenSearch cluster endpoint"
+#   value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_endpoint : null
+# }
 
-output "opensearch_dashboard_endpoint" {
-  description = "OpenSearch Dashboards endpoint URL"
-  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_dashboard_endpoint : null
-}
+# output "opensearch_dashboard_endpoint" {
+#   description = "OpenSearch Dashboards endpoint URL"
+#   value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_dashboard_endpoint : null
+# }
 
-output "opensearch_domain_endpoint" {
-  description = "OpenSearch domain HTTPS endpoint"
-  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_domain_endpoint : null
-}
+# output "opensearch_domain_endpoint" {
+#   description = "OpenSearch domain HTTPS endpoint"
+#   value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].opensearch_domain_endpoint : null
+# }
 
-output "application_log_group_name" {
-  description = "CloudWatch log group for application logs"
-  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].application_log_group_name : null
-}
+# output "application_log_group_name" {
+#   description = "CloudWatch log group for application logs"
+#   value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].application_log_group_name : null
+# }
 
-output "system_log_group_name" {
-  description = "CloudWatch log group for system logs"
-  value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].system_log_group_name : null
-}
+# output "system_log_group_name" {
+#   description = "CloudWatch log group for system logs"
+#   value       = var.enable_elk_stack && length(module.elk) > 0 ? module.elk[0].system_log_group_name : null
+# }
 
 # Route 53 Outputs
 output "domain_name" {
@@ -146,4 +146,26 @@ output "bastion_security_group_id" {
 output "ssh_connection_command" {
   description = "SSH command to connect to bastion host"
   value       = module.bastion.ssh_connection_command
+}
+
+# Health Check Debugging Outputs
+output "health_check_dashboard_url" {
+  description = "🔍 URL to Health Check Debugging Dashboard"
+  value       = module.monitoring.health_check_dashboard_url
+}
+
+output "main_dashboard_url" {
+  description = "📊 URL to Main CloudWatch Dashboard"
+  value       = module.monitoring.dashboard_url
+}
+
+output "health_check_debug_log_group" {
+  description = "📝 CloudWatch Log Group for Health Check Debugging"
+  value       = module.monitoring.health_check_debug_log_group
+}
+
+# Alert and Monitoring Outputs
+output "sns_alerts_topic" {
+  description = "📧 SNS Topic ARN for receiving alerts"
+  value       = module.monitoring.sns_topic_arn
 }

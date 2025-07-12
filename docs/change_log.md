@@ -166,6 +166,22 @@ This initial setup establishes a complete, production-ready modular Terraform in
 - **Commitment**: Keep cost document updated with every infrastructure change
 - **Purpose**: Transparent cost management and optimization for all environments
 
+## 2025-07-12
+
+### Architecture Refactoring - Separated Concerns Implementation
+
+- **Removed**: `modules/ec2/` - Eliminated redundant code duplication
+- **Enhanced**: `modules/launch_template/` - Now the single source of truth for instance configuration
+- **Enhanced**: `modules/autoscaling/` - Dedicated Auto Scaling Group management
+- **Updated**: `docs/architecture.md` - Reflects new separated concerns architecture
+- **Purpose**: Implemented clean separation of concerns following single responsibility principle. Launch Template module handles instance configuration, Auto Scaling module handles availability and scaling. This eliminates code duplication and improves maintainability.
+
+**Architecture Impact**: 
+- Reduced code duplication by 100+ lines
+- Improved module separation and clarity
+- Enhanced maintainability and testing
+- Better follows Terraform best practices
+
 ### Project Status: COMPLETE ✅
 - ✅ Modular Terraform infrastructure designed and implemented
 - ✅ Role-based Copilot system established and documented

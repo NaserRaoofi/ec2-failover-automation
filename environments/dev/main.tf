@@ -143,7 +143,7 @@ module "autoscaling" {
   enable_scaling_policies = var.enable_scaling_policies
 }
 
-# Monitoring Module - Enabled for comprehensive observability
+# Monitoring Module - Enhanced with Health Check Debugging
 module "monitoring" {
   source = "../../modules/monitoring"
 
@@ -155,45 +155,51 @@ module "monitoring" {
   autoscaling_group_name = module.autoscaling.autoscaling_group_name
   alert_email_addresses  = var.alert_email_addresses
   common_tags            = local.common_tags
+  
+  # Enhanced Health Check Debugging
+  enable_health_check_dashboard = true   # Create dedicated debugging dashboard
+  health_check_alarm_threshold  = 1      # Alert immediately on unhealthy targets
+  enable_health_check_logs     = true    # Enable detailed health check logging
 }
 
-# ELK Stack Module - Centralized Logging and Analytics
-module "elk" {
-  count  = var.enable_elk_stack ? 1 : 0
-  source = "../../modules/elk"
+# ELK Stack Module - COMMENTED OUT FOR HEALTH CHECK DEBUGGING
+# Centralized Logging and Analytics - Temporarily disabled
+# module "elk" {
+#   count  = var.enable_elk_stack ? 1 : 0
+#   source = "../../modules/elk"
+#
+#   project_name           = var.project_name
+#   vpc_id                 = module.networking.vpc_id
+#   private_subnet_ids     = module.networking.private_subnet_ids
+#   allowed_security_groups = [
+#     module.networking.web_security_group_id,
+#     module.networking.alb_security_group_id
+#   ]
+#   
+#   # OpenSearch configuration
+#   instance_type         = var.opensearch_instance_type
+#   instance_count        = var.opensearch_instance_count
+#   master_password       = var.opensearch_master_password
+#   volume_size          = var.opensearch_volume_size
+#   enable_zone_awareness = var.opensearch_zone_awareness
+#   log_retention_days   = var.elk_log_retention_days
+#   
+#   # Note: Using direct log shipping from EC2 instead of CloudWatch Logs destinations
+#   
+#   # Use monitoring SNS topic for alerts if available
+#   sns_topic_arn = length(module.monitoring.sns_topic_arn) > 0 ? module.monitoring.sns_topic_arn : null
+#   
+#   common_tags = local.common_tags
+# }
 
-  project_name           = var.project_name
-  vpc_id                 = module.networking.vpc_id
-  private_subnet_ids     = module.networking.private_subnet_ids
-  allowed_security_groups = [
-    module.networking.web_security_group_id,
-    module.networking.alb_security_group_id
-  ]
-  
-  # OpenSearch configuration
-  instance_type         = var.opensearch_instance_type
-  instance_count        = var.opensearch_instance_count
-  master_password       = var.opensearch_master_password
-  volume_size          = var.opensearch_volume_size
-  enable_zone_awareness = var.opensearch_zone_awareness
-  log_retention_days   = var.elk_log_retention_days
-  
-  # Note: Using direct log shipping from EC2 instead of CloudWatch Logs destinations
-  
-  # Use monitoring SNS topic for alerts if available
-  sns_topic_arn = length(module.monitoring.sns_topic_arn) > 0 ? module.monitoring.sns_topic_arn : null
-  
-  common_tags = local.common_tags
-}
-
-# Separate IAM policy attachment for ELK log shipping (to avoid count dependency)
-resource "aws_iam_role_policy_attachment" "elk_log_shipping_policy_attachment" {
-  count      = var.enable_elk_stack ? 1 : 0
-  role       = module.iam.ec2_role_name
-  policy_arn = module.iam.opensearch_log_shipping_policy_arn
-  
-  depends_on = [module.iam, module.elk]
-}
+# Separate IAM policy attachment for ELK log shipping - COMMENTED OUT
+# resource "aws_iam_role_policy_attachment" "elk_log_shipping_policy_attachment" {
+#   count      = var.enable_elk_stack ? 1 : 0
+#   role       = module.iam.ec2_role_name
+#   policy_arn = module.iam.opensearch_log_shipping_policy_arn
+#   
+#   depends_on = [module.iam, module.elk]
+# }
 
 
 # Create EC2 Key Pair for SSH access to instances

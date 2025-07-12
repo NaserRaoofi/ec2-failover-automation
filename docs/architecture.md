@@ -213,34 +213,48 @@ Each Terraform module follows infrastructure as code best practices with clear s
 - **Conditional Resources**: Optional components based on requirements
 - **Right-Sized Subnets**: Efficient IP address utilization
 
-### 2. EC2 Module (`modules/ec2/`)
+### 2. Launch Template Module (`modules/launch_template/`)
 
-<!-- Copilot is now acting as: DevOps Engineer (see copilot_roles/devops_engineer.md) -->
+<!-- Copilot is now acting as: IaC Engineer (see copilot_roles/iac_engineer.md) -->
 
-**Purpose**: Scalable, secure, and monitored compute instances
+**Purpose**: Standardized instance configuration blueprint for consistent deployments
 
 **Key Components**:
-- **EC2 Instances**: Application servers with automated configuration
-- **EBS Volumes**: High-performance GP3 encrypted storage
-- **Launch Templates**: Consistent instance configuration
-- **User Data Scripts**: Automated software installation and configuration
+- **Launch Template**: Versioned instance configuration with latest EC2 features
+- **EBS Configuration**: High-performance GP3 encrypted storage with customizable IOPS
+- **Security Configuration**: Secure metadata service (IMDSv2) and security group attachments
+- **User Data Integration**: Automated software installation and configuration
 - **Instance Profiles**: Secure AWS service access via IAM roles
-- **Security Groups**: Instance-level network access control
+- **Comprehensive Tagging**: Resource tracking across instance, volume, and network interface
 
 **Architecture Decisions**:
-- **GP3 EBS Volumes**: Superior price/performance with 3,000 IOPS baseline
-- **Encrypted Storage**: Data at rest protection for compliance
-- **User Data Automation**: Consistent server initialization
-- **Instance Profiles**: Secure service-to-service authentication
-- **Lifecycle Management**: Create-before-destroy for zero-downtime updates
+- **GP3 EBS Volumes**: Superior price/performance with configurable IOPS and throughput
+- **IMDSv2 Enforcement**: Enhanced security for instance metadata access
+- **Encrypted Storage**: Data at rest protection with optional KMS key management
+- **Tag Specifications**: Multi-resource tagging for cost allocation and management
+- **Lifecycle Management**: Create-before-destroy for zero-downtime template updates
 
-**Monitoring & Observability**:
-- **CloudWatch Agent**: Detailed system metrics and logs
-- **Custom Metrics**: Application-specific monitoring
-- **Health Checks**: Automated failure detection
-- **Log Forwarding**: Centralized log aggregation
+### 3. Auto Scaling Module (`modules/autoscaling/`)
 
-### 3. Load Balancer Module (`modules/load_balancer/`)
+<!-- Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md) -->
+
+**Purpose**: Automatic instance replacement, high availability, and demand-based scaling
+
+**Key Components**:
+- **Auto Scaling Group**: Multi-AZ instance distribution with health monitoring
+- **Scaling Policies**: CPU-based automatic scaling (optional)
+- **Instance Refresh**: Rolling updates with configurable health thresholds
+- **Load Balancer Integration**: Automatic target group registration
+- **CloudWatch Alarms**: Metric-based scaling triggers
+
+**Architecture Decisions**:
+- **Multi-AZ Distribution**: Automatic instance replacement across availability zones
+- **Rolling Updates**: Zero-downtime deployments with instance refresh
+- **Health Check Integration**: Load balancer and EC2 health monitoring
+- **Configurable Scaling**: Environment-specific capacity management
+- **Termination Protection**: Optional scale-in protection for critical instances
+
+### 4. Load Balancer Module (`modules/load_balancer/`)
 
 <!-- Copilot is now acting as: AWS Architect (see copilot_roles/aws_architect.md) -->
 

@@ -1,8 +1,8 @@
 ---
 - name: Configure EC2 Instance for High Availability Infrastructure
   hosts: localhost
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
   
   vars:
     project_name: "{{ ansible_env.PROJECT_NAME | default('ec2-failover') }}"
@@ -11,7 +11,7 @@
   pre_tasks:
     - name: Update package cache
       yum:
-        update_cache: yes
+        update_cache: true
         
     - name: Create application log directory
       file:
@@ -43,7 +43,7 @@
       lineinfile:
         path: /var/log/application.log
         line: "{{ ansible_date_time.iso8601 }}: Ansible configuration completed successfully - {{ project_name }} {{ environment }}"
-        create: yes
+        create: true
         mode: '0644'
 
     - name: Create completion marker

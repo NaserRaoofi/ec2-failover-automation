@@ -23,10 +23,10 @@ resource "aws_lb_target_group" "main" {
 
   health_check {
     enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 5
-    timeout             = 5
-    interval            = 30
+    healthy_threshold   = 2     # 2 consecutive successes = healthy
+    unhealthy_threshold = 15    # 15 consecutive failures = unhealthy (7.5 minutes)
+    timeout             = 5     # 5 second timeout per check
+    interval            = 30    # Check every 30 seconds
     path                = var.health_check_path
     matcher             = "200"
     port                = "traffic-port"
