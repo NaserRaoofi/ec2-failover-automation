@@ -3,7 +3,7 @@
 # General Configuration
 aws_region   = "us-east-1"
 project_name = "ec2-failover-dev"
-environment  = "dev"
+environment = "dev"
 
 # Networking Configuration
 vpc_cidr              = "10.0.0.0/16"
@@ -22,7 +22,7 @@ target_port                = 80
 target_protocol            = "HTTP"
 listener_port              = 80
 listener_protocol          = "HTTP"
-health_check_path          = "/"
+health_check_path          = "/health"
 enable_deletion_protection = false
 
 # Route 53 Configuration
@@ -40,3 +40,155 @@ enable_bastion_eip  = true
 bastion_instance_type = "t3.micro"
 bastion_root_volume_size = 20
 allowed_ssh_cidrs   = ["0.0.0.0/0"]  # IMPORTANT: Replace with your public IP for security!
+
+# Health Check Configuration - Extended for Ansible folder download + installation
+health_check_grace_period = 1200  # 20 minutes to allow for Ansible download + package installation
+health_check_type = "ELB"         # Use ELB health checks for application-level monitoring
+
+# Smart user_data with Git-based Ansible configuration
+user_data = <<-EOF
+#!/bin/bash
+# OPTIMIZED startup script: Immediate health check + Git-based Ansible configuration
+
+# Set error handling
+set -e
+
+# Create log file
+LOG_FILE="/var/log/startup.log"
+echo "$(date): Starting instance initialization" >> $LOG_FILE
+
+# ============================================================================
+# PHASE 1: IMMEDIATE HEALTH CHECK SETUP (Critical for ASG)
+# ============================================================================
+
+# Install Apache with minimal output
+yum install -y httpd > /dev/null 2>&1
+
+# Create health check endpoint IMMEDIATELY (before anything else)
+mkdir -p /var/www/html
+echo "OK" > /var/www/html/health
+
+# Create initial index with status
+cat > /var/www/html/index.html << 'INITIAL_INDEX'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instance Starting Up</title>
+    <meta http-equiv="refresh" content="30">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
+        .status { color: #28a745; font-weight: bold; font-size: 1.2em; }
+        .progress { background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 EC2 Instance Initializing</h1>
+    <p class="status">✅ Health Check Ready</p>
+    <div class="progress">
+        <p>📦 Installing and configuring system components...</p>
+        <p>⏱️ Configuration typically completes within 15-20 minutes</p>
+        <p>🔄 This page will auto-refresh every 30 seconds</p>
+    </div>
+    <p><em>Instance started at: $(date)</em></p>
+</body>
+</html>
+INITIAL_INDEX
+
+# Start Apache immediately
+systemctl start httpd
+systemctl enable httpd
+
+echo "$(date): HEALTH CHECK READY - Apache started and /health endpoint responding" >> $LOG_FILE
+
+# ============================================================================
+# PHASE 2: GIT-BASED ANSIBLE CONFIGURATION (Background)
+# ============================================================================
+
+{
+  echo "$(date): Starting Git-based Ansible configuration" >> $LOG_FILE
+  
+  # Optimize package installation (parallel where possible)
+  echo "$(date): Installing dependencies..." >> $LOG_FILE
+  yum update -y >> $LOG_FILE 2>&1
+  yum install -y python3 python3-pip curl wget git >> $LOG_FILE 2>&1
+  
+  # Install Ansible using pip3
+  echo "$(date): Installing Ansible..." >> $LOG_FILE
+  pip3 install ansible >> $LOG_FILE 2>&1
+  
+  # Verify Ansible installation
+  /usr/local/bin/ansible --version >> $LOG_FILE 2>&1
+  echo "$(date): Ansible installed successfully" >> $LOG_FILE
+  
+  # Clone only the ansible directory (sparse checkout for efficiency)
+  echo "$(date): Cloning ansible directory only from https://github.com/NaserRaoofi/ec2-failover-automation.git" >> $LOG_FILE
+  mkdir -p /opt/ec2-failover-automation
+  cd /opt/ec2-failover-automation
+  git init >> $LOG_FILE 2>&1
+  git remote add origin https://github.com/NaserRaoofi/ec2-failover-automation.git >> $LOG_FILE 2>&1
+  git config core.sparseCheckout true >> $LOG_FILE 2>&1
+  echo "ansible/*" > .git/info/sparse-checkout
+  git pull --depth=1 origin main >> $LOG_FILE 2>&1
+  
+  # Navigate to ansible directory and run playbook (FIXED PATH RESOLUTION)
+  cd /opt/ec2-failover-automation/ansible
+  
+  # Set Ansible config to use the local ansible.cfg
+  export ANSIBLE_CONFIG=/opt/ec2-failover-automation/ansible/ansible.cfg
+  
+  # Run the main site playbook for self-configuration from the correct directory
+  echo "$(date): Running Ansible playbook for instance configuration from $(pwd)" >> $LOG_FILE
+  /usr/local/bin/ansible-playbook -i inventory/hosts playbooks/site.yml >> $LOG_FILE 2>&1
+  
+  # Create completion marker
+  mkdir -p /opt/ansible
+  touch /opt/ansible/.ansible_completed
+  echo "$(date): Ansible configuration completed successfully" >> $LOG_FILE
+  
+  # Create a status page showing the configuration source
+  cat > /var/www/html/config-info.html << 'CONFIG_INFO'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Configuration Information</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .info { background: #e7f5e7; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .source { background: #f0f8ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Instance Configuration Status</h1>
+    <div class="info">
+        <h3>✅ Configuration Method: Git Sparse Checkout (Ansible Only)</h3>
+        <p><strong>Repository:</strong> https://github.com/NaserRaoofi/ec2-failover-automation.git</p>
+        <p><strong>Downloaded:</strong> ansible/ directory only (sparse checkout)</p>
+        <p><strong>Configuration Path:</strong> /opt/ec2-failover-automation/ansible/</p>
+        <p><strong>Playbook:</strong> site.yml</p>
+    </div>
+    <div class="source">
+        <h3>📋 Configuration Details:</h3>
+        <ul>
+            <li>🌐 <strong>Web Server:</strong> Apache HTTP Server</li>
+            <li>📊 <strong>Monitoring:</strong> CloudWatch Agent + Custom Metrics</li>
+            <li>🐳 <strong>Container Runtime:</strong> Docker + Docker Compose</li>
+            <li>🟢 <strong>Runtime:</strong> Node.js 18</li>
+            <li>🔒 <strong>Security:</strong> Fail2ban + Firewall + Hardening</li>
+            <li>📈 <strong>System Tools:</strong> htop, tree, jq, and monitoring utilities</li>
+        </ul>
+        <p><em>All packages installed via version-controlled Ansible playbooks</em></p>
+    </div>
+    <p><a href="/">← Back to Main Page</a> | <a href="/health">Health Check</a></p>
+</body>
+</html>
+CONFIG_INFO
+
+  echo "$(date): Configuration info page created" >> $LOG_FILE
+  
+} & # Run in background to avoid blocking health checks
+
+echo "$(date): Instance startup completed - health endpoint is READY, Git-based Ansible configuration running in background" >> $LOG_FILE
+
+# Health endpoint is immediately available for ALB checks
+# Ansible configuration continues in background without affecting health status
+EOF
